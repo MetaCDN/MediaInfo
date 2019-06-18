@@ -6,29 +6,34 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'kotlin-kapt'
 
+import com.android.build.OutputFile
+
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "net.mediaarea.mediainfo"
-        minSdkVersion 19
-        targetSdkVersion 27
-        versionCode 1
-        versionName "18.08.1"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        minSdkVersion 14
+        targetSdkVersion 28
+        versionCode 8
+        versionName "19.04"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
         externalNativeBuild {
             cmake {
-                cppFlags "-DUNICODE -D_UNICODE"
+                cppFlags "-DUNICODE -D_UNICODE -DMEDIAINFO_ADVANCED_NO -DMEDIAINFO_REFERENCES_NO -DMEDIAINFO_FILTER_NO -DMEDIAINFO_DUPLICATE_NO -DMEDIAINFO_MACROBLOCKS_NO -DMEDIAINFO_TRACE_NO -DMEDIAINFO_TRACE_FFV1CONTENT_NO -DMEDIAINFO_IBI_NO -DMEDIAINFO_DIRECTORY_NO -DMEDIAINFO_LIBCURL_NO -DMEDIAINFO_LIBMMS_NO -DMEDIAINFO_DVDIF_ANALYZE_NO -DMEDIAINFO_MPEGTS_DUPLICATE_NO -DMEDIAINFO_READTHREAD_NO -DMEDIAINFO_MD5_NO -DMEDIAINFO_SHA1_NO -DMEDIAINFO_SHA2_NO -DMEDIAINFO_EVENTS_NO -DMEDIAINFO_DEMUX_NO -DMEDIAINFO_AES_NO -DMEDIAINFO_FIXITY_NO -DMEDIAINFO_READER_NO -DMEDIAINFO_NEXTPACKET_NO"
             }
         }
-    }
-    if(project.hasProperty("RELEASE_STORE_FILE")) {
-        signingConfigs {
-            release {
-                storeFile file(RELEASE_STORE_FILE)
-                storePassword RELEASE_STORE_PASSWORD
-                keyAlias RELEASE_KEY_ALIAS
-                keyPassword RELEASE_KEY_PASSWORD
-           }
+        if(project.hasProperty("RELEASE_STORE_FILE")) {
+            signingConfigs {
+                release {
+                    storeFile file(RELEASE_STORE_FILE)
+                    storePassword RELEASE_STORE_PASSWORD
+                    keyAlias RELEASE_KEY_ALIAS
+                    keyPassword RELEASE_KEY_PASSWORD
+                }
+            }
         }
     }
     buildTypes {
@@ -36,7 +41,8 @@ android {
             if(project.hasProperty("RELEASE_STORE_FILE")) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -45,27 +51,53 @@ android {
             path "CMakeLists.txt"
         }
     }
-    buildToolsVersion '27.0.3'
+    splits {
+        abi {
+            enable true
+            universalApk true
+        }
+    }
+
+    def abiCodes = ['armeabi-v7a':1, 'arm64-v8a':2, 'x86':3, 'x86_64':4]
+    android.applicationVariants.all { variant ->
+        // Assigns a different version code for each output APK.
+        variant.outputs.each {
+            output ->
+                def abiName = output.getFilter(OutputFile.ABI)
+                output.versionCodeOverride = variant.versionCode * 10 + abiCodes.get(abiName, 0)
+        }
+    }
+
+    buildToolsVersion '28.0.3'
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
-    implementation 'com.android.support:design:27.1.1'
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.android.support:recyclerview-v7:27.1.1'
+    implementation 'com.google.android.material:material:1.1.0-alpha01'
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'com.android.support:design:28.2.0'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test:runner:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
     // Android Room
-    implementation 'android.arch.persistence.room:runtime:1.1.0'
-    implementation 'android.arch.persistence.room:rxjava2:1.1.0'
-    kapt 'android.arch.persistence.room:compiler:1.1.0'
+    implementation 'androidx.room:room-runtime:2.1.0-alpha02'
+    implementation 'androidx.room:room-rxjava2:2.1.0-alpha02'
+    kapt 'androidx.room:room-compiler:2.1.0-alpha02'
+    //RxJava
     implementation 'io.reactivex.rxjava2:rxjava:2.1.14'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
     // Android Lifecycle
-    implementation 'android.arch.lifecycle:extensions:1.1.1'
-    kapt "android.arch.lifecycle:compiler:1.1.1"
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    kapt "androidx.lifecycle:lifecycle-compiler:2.0.0"
+    // Legacy file picker
+    implementation 'com.github.angads25:filepicker:1.1.1'
+    // Google Billing
+    implementation "com.android.billingclient:billing:1.2"
+    // KotlinX Coroutines
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1"
 }

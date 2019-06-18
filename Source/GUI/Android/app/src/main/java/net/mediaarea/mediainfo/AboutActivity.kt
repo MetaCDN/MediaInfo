@@ -6,7 +6,7 @@
 
 package net.mediaarea.mediainfo
 
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.net.Uri
 import android.content.Intent
@@ -26,7 +26,7 @@ class AboutActivity : AppCompatActivity() {
                 .replace("MIL_VERSION", Core.version)
 
         website_btn.setOnClickListener {
-            val intent: Intent = Intent(Intent.ACTION_VIEW)
+            val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(getString(R.string.website_url))
             startActivity(intent)
         }

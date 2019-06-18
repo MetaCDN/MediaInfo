@@ -6,8 +6,10 @@
 
 package net.mediaarea.mediainfo
 
-import android.support.v7.app.AppCompatActivity
-import android.arch.lifecycle.ViewModelProviders
+import androidx.core.app.NavUtils
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProviders
+
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
@@ -60,7 +62,9 @@ class ReportDetailActivity : AppCompatActivity(), ReportActivityListener {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         android.R.id.home -> {
-            navigateUpTo(Intent(this, ReportListActivity::class.java))
+            NavUtils.navigateUpTo(this, Intent(this, ReportListActivity::class.java))
+            true
+
         }
         else -> super.onOptionsItemSelected(item)
     }
