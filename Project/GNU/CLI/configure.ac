@@ -5,7 +5,7 @@ dnl #########################################################################
 dnl -------------------------------------------------------------------------
 dnl Name and version
 dnl
-AC_INIT([mediainfo], [19.04])
+AC_INIT([mediainfo], [21.09])
 
 dnl -------------------------------------------------------------------------
 dnl Test if we are at the good place
@@ -43,6 +43,7 @@ AC_ARG_ENABLE(arch-ppc,         AC_HELP_STRING([--enable-arch-ppc],         [Cre
 AC_ARG_ENABLE(arch-ppc64,       AC_HELP_STRING([--enable-arch-ppc64],       [Create Mac PPC64 architecture]),             , enable_arch_ppc64=no)
 AC_ARG_ENABLE(arch-i386,        AC_HELP_STRING([--enable-arch-i386],        [Create Mac i386 architecture]),              , enable_arch_i386=no)
 AC_ARG_ENABLE(arch-x86_64,      AC_HELP_STRING([--enable-arch-x86_64],      [Create Mac x86_64 architecture]),            , enable_arch_x86_64=no)
+AC_ARG_ENABLE(arch-arm64,       AC_HELP_STRING([--enable-arch-arm64],       [Create Mac arm64 architecture]),             , enable_arch_arm64=no)
 AC_ARG_ENABLE(staticlibs,       AC_HELP_STRING([--enable-staticlibs],       [Use static libmediainfo and libzen]),        , enable_staticlibs=no)
 AC_ARG_ENABLE([stream_missing],    [AS_HELP_STRING(([--enable-stream_missing],    [Disable stream support (old compilers)]))],    , [enable_stream_missing=no])
 
@@ -70,8 +71,8 @@ if test -e ../../../../ZenLib/Project/GNU/Library/libzen-config; then
 elif test "$(libzen-config Exists)" = "yes" ; then
 	enable_unicode="$(libzen-config Unicode)"
 else
-	if pkg-config --exists libzen; then
-		enable_unicode="$(pkg-config --variable=Unicode libzen)"
+	if ${PKG_CONFIG:-pkg-config} --exists libzen; then
+		enable_unicode="$(${PKG_CONFIG:-pkg-config} --variable=Unicode libzen)"
 	else
 		AC_MSG_ERROR([libzen configuration is not found])
 	fi
@@ -177,15 +178,15 @@ if test "$with_dll" != "yes"; then
 			LIBS="$LIBS $(libmediainfo-config LIBS)"
 		fi
 	else
-		if pkg-config --exists libmediainfo; then
-			CXXFLAGS="$CXXFLAGS $(pkg-config --cflags libmediainfo)"
+		if ${PKG_CONFIG:-pkg-config} --exists libmediainfo; then
+			CXXFLAGS="$CXXFLAGS $(${PKG_CONFIG:-pkg-config} --cflags libmediainfo)"
 			if test "$enable_staticlibs" = "yes"; then
 				with_mediainfolib="system (static)"
-				LIBS="$LIBS $(pkg-config --variable=Libs_Static libmediainfo)"
-				LIBS="$LIBS $(pkg-config --static --libs libmediainfo)"
+				LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --variable=Libs_Static libmediainfo)"
+				LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --static --libs libmediainfo)"
 			else
 				with_mediainfolib="system"
-				LIBS="$LIBS $(pkg-config --libs libmediainfo)"
+				LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --libs libmediainfo)"
 			fi
 		else
 			AC_MSG_ERROR([libmediainfo configuration is not found])
@@ -219,16 +220,16 @@ elif test "$(libzen-config Exists)" = "yes" ; then
 		LIBS="$LIBS $(libzen-config LIBS)"
 	fi
 else
-	if pkg-config --exists libzen; then
-		CXXFLAGS="$CXXFLAGS $(pkg-config --cflags libzen)"
-		MediaInfoLib_CXXFLAGS="$MediaInfoLib_CXXFLAGS $(pkg-config --cflags libzen)"
+	if ${PKG_CONFIG:-pkg-config} --exists libzen; then
+		CXXFLAGS="$CXXFLAGS $(${PKG_CONFIG:-pkg-config} --cflags libzen)"
+		MediaInfoLib_CXXFLAGS="$MediaInfoLib_CXXFLAGS $(${PKG_CONFIG:-pkg-config} --cflags libzen)"
 		if test "$enable_staticlibs" = "yes"; then
 			with_zenlib="system (static)"
-			LIBS="$LIBS $(pkg-config --variable=Libs_Static libzen)"
-			LIBS="$LIBS $(pkg-config --static --libs libzen)"
+			LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --variable=Libs_Static libzen)"
+			LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --static --libs libzen)"
 		else
 			with_zenlib="system"
-			LIBS="$LIBS $(pkg-config --libs libzen)"
+			LIBS="$LIBS $(${PKG_CONFIG:-pkg-config} --libs libzen)"
 		fi
 	else
 		AC_MSG_ERROR([libzen configuration is not found])
@@ -259,12 +260,6 @@ esac
 if test "$enable_universal_binary" = "yes"; then
 	enable_arch_ppc=yes
 	enable_arch_i386=yes
-	if test "$with_macosx_sdk" = no ; then
-		with_macosx_sdk="/Developer/SDKs/MacOSX10.4u.sdk"
-	fi
-	if test "$with_macosx_version_min" = no ; then
-		with_macosx_version_min="10.4"
-	fi
 fi
 if test "$enable_arch_ppc" = "yes"; then
 	CXXFLAGS="$CXXFLAGS -arch ppc"
@@ -286,11 +281,12 @@ if test "$enable_arch_x86_64" = "yes"; then
 	CFLAGS="$CFLAGS -arch x86_64"
 	LDFLAGS="$LDFLAGS -arch x86_64"
 fi
-if test "$with_macosx_sdk" = "yes" ; then
-	CXXFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CXXFLAGS"
-	CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CFLAGS"
-	LDFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $LDFLAGS"
-elif test "x$with_macosx_sdk" != xno ; then
+if test "$enable_arch_arm64" = "yes"; then
+	CXXFLAGS="$CXXFLAGS -arch arm64"
+	CFLAGS="$CFLAGS -arch arm64"
+	LDFLAGS="$LDFLAGS -arch arm64"
+fi
+if test "x$with_macosx_sdk" != xno ; then
 	CXXFLAGS="-isysroot $with_macosx_sdk $CXXFLAGS"
 	CFLAGS="-isysroot $with_macosx_sdk $CFLAGS"
 	LDFLAGS="-isysroot $with_macosx_sdk $LDFLAGS"

@@ -76,11 +76,11 @@ void __fastcall TAboutF::FormShow(TObject *Sender)
         WriteToTranslator->Caption=Prefs->Translate(__T("WriteToTranslator")).c_str();
         WriteToTranslator->Visible=true;
     }
-
-    //if (Prefs->Donated) //No more
+    Sponsor_Label->Visible=false;
+    if (Prefs->Sponsored && !Prefs->Donated && !Prefs->Translate(__T("SponsorMessage")).empty() &&  !Prefs->Translate(__T("SponsorMessage")).empty())
     {
-        Tektronix->Visible=false;
-        Tektronix_Label->Visible=false;
+        Sponsor_Label->Caption = (__T("<a href=\"") + Prefs->Translate(__T("SponsorUrl")) + __T("\">") + Prefs->Translate(__T("SponsorMessage")) + __T("</a>")).c_str();
+        Sponsor_Label->Visible=true;
     }
 }
 
@@ -115,18 +115,14 @@ void __fastcall TAboutF::WebSiteClick(TObject *Sender)
     ShellExecute(NULL, NULL, MEDIAINFO_URL, NULL, NULL, SW_SHOWNORMAL);
 }
 
+//---------------------------------------------------------------------------
+void __fastcall TAboutF::SponsorClick(TObject *Sender, const UnicodeString Link, TSysLinkType LinkType)
+{
+    ShellExecute(NULL, NULL, Link.c_str(), NULL, NULL, SW_SHOWNORMAL);
+}
 
 //***************************************************************************
 // C++
 //***************************************************************************
 
 #endif //MEDIAINFOGUI_ABOUT_NO
-
-
-
-void __fastcall TAboutF::TektronixClick(TObject *Sender)
-{
-    ShellExecute(NULL, NULL, __T("http://www.tek.com/file-based-qc-solutions"), NULL, NULL, SW_SHOWNORMAL);
-}
-//---------------------------------------------------------------------------
-

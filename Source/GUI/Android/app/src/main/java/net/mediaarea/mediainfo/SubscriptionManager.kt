@@ -7,6 +7,7 @@
 package net.mediaarea.mediainfo
 
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicBoolean
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,37 +20,34 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.OnLifecycleEvent
 import android.util.Log
-import android.content.Context
 import android.app.Activity
 import android.app.Application
-import com.android.billingclient.api.SkuDetailsResponseListener
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.SkuDetailsParams
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.SkuDetails
-import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.*
 
 class SubscriptionManager private constructor(private val application: Application) : PurchasesUpdatedListener, BillingClientStateListener, LifecycleObserver {
     val ready = MutableLiveData<Boolean>()
     val subscribed = MutableLiveData<Boolean>()
+    val isLifetime = MutableLiveData<Boolean>()
+    val details = MutableLiveData<SkuDetails>()
+    val lifetimeDetails = MutableLiveData<SkuDetails>()
+
+    private var detailsAvailables = AtomicBoolean(false)
+    private var lifetimeDetailsAvailables = AtomicBoolean(false)
 
     private lateinit var billingClient: BillingClient
 
     @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
     fun create() {
-        billingClient = BillingClient.newBuilder(application.applicationContext).setListener(this).build()
+        billingClient = BillingClient.newBuilder(application.applicationContext)
+                .enablePendingPurchases()
+                .setListener(this)
+                .build()
 
-        updateState(false)
-        updateSubscribedState(false)
+        ready.value = false
+        subscribed.value = false
+        isLifetime.value = false
 
-        if (billingClient.isReady) {
-            updateState(isSubscriptionSupported())
-        }
-        else {
-            billingClient.startConnection(this)
-        }
+        billingClient.startConnection(this)
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -61,86 +59,146 @@ class SubscriptionManager private constructor(private val application: Applicati
 
     private fun updateState(newState: Boolean) {
         if (ready.value!=newState) {
-            ready.postValue(newState)
+            ready.value = newState
         }
     }
 
     private fun updateSubscribedState(newState: Boolean) {
         if (subscribed.value!=newState) {
-            subscribed.postValue(newState)
+            subscribed.value = newState
+        }
+    }
+
+    private fun updateLifetimeState(newState: Boolean) {
+        if (isLifetime.value!=newState) {
+            isLifetime.value = newState
         }
     }
 
     private fun isSubscriptionSupported(): Boolean {
-        val responseCode = billingClient.isFeatureSupported(BillingClient.FeatureType.SUBSCRIPTIONS)
-        return responseCode == BillingClient.BillingResponse.OK
+        val response = billingClient.isFeatureSupported(BillingClient.FeatureType.SUBSCRIPTIONS)
+        return response.responseCode==BillingClient.BillingResponseCode.OK
     }
 
     fun launchBillingFlow(activity: Activity, params: BillingFlowParams): Int {
         if (!billingClient.isReady) {
             Log.e(LOG_TAG, "BillingClient is not ready to start billing flow")
         }
-        val responseCode = billingClient.launchBillingFlow(activity, params)
-        Log.i(LOG_TAG, "Launch Billing Flow Response Code: $responseCode")
-        return responseCode
+        val response = billingClient.launchBillingFlow(activity, params)
+        Log.i(LOG_TAG, "Launch Billing Flow Response Code: $response")
+        return response.responseCode
     }
 
-    // Process new purchase
-    override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
-        if (responseCode == BillingClient.BillingResponse.OK) {
-                handlePurchases(purchases)
-        } else if (responseCode == BillingClient.BillingResponse.DEVELOPER_ERROR) {
+    override fun onPurchasesUpdated(p0: BillingResult, p1: MutableList<Purchase>?) {
+        if (p0.responseCode==BillingClient.BillingResponseCode.OK) {
+            handlePurchases(p1)
+        } else if (p0.responseCode==BillingClient.BillingResponseCode.DEVELOPER_ERROR) {
             Log.e(LOG_TAG, "Your app's configuration is incorrect. Review in the Google Play Console. Possible causes of this error include: APK is not signed with release key; SKU productId mismatch.")
         }
     }
 
-     // Connection to the Play BillingClient successfully established
-    override fun onBillingSetupFinished(responseCode: Int) {
-        if (responseCode == BillingClient.BillingResponse.OK) {
+    override fun onBillingSetupFinished(p0: BillingResult) {
+        if (p0.responseCode==BillingClient.BillingResponseCode.OK) {
             RetryPolicies.resetConnectionRetryPolicyCounter()
+
+            fun updatePurchasesTask() {
+                billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS) { result: BillingResult, purchaseList: MutableList<Purchase> ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        handlePurchases(purchaseList)
+                    }
+                }
+                billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP) { result: BillingResult, purchaseList: MutableList<Purchase> ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        handlePurchases(purchaseList)
+                    }
+                }
+            }
+            RetryPolicies.taskExecutionRetryPolicy(billingClient, this) { updatePurchasesTask() }
+
             if (isSubscriptionSupported()) {
-                updateState(isSubscriptionSupported())
+                val params = SkuDetailsParams
+                        .newBuilder()
+                        .setSkusList(listOf(application.getString(R.string.subscription_sku)))
+                        .setType(BillingClient.SkuType.SUBS)
+                        .build()
+
+                billingClient.querySkuDetailsAsync(params) { result: BillingResult, list: List<SkuDetails>? ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        list?.forEach {
+                            if (it.sku == application.getString(R.string.subscription_sku)) {
+                                details.postValue(it)
+                                detailsAvailables.set(true)
+                            }
+                        }
+
+                        if (detailsAvailables.get() && lifetimeDetailsAvailables.get()) {
+                            ready.postValue(true)
+                        }
+                    }
+                }
             }
 
-            fun task() {
-                val result = billingClient.queryPurchases(BillingClient.SkuType.SUBS)
-                handlePurchases(result?.purchasesList)
-            }
-            RetryPolicies.taskExecutionRetryPolicy(billingClient, this) { task() }
+            val params = SkuDetailsParams
+               .newBuilder()
+               .setSkusList(listOf(application.getString(R.string.lifetime_subscription_sku)))
+               .setType(BillingClient.SkuType.INAPP)
+               .build()
 
-            // Trigger cache update
-            billingClient.queryPurchaseHistoryAsync(BillingClient.SkuType.SUBS) { _, _ ->
-                val result = billingClient.queryPurchases(BillingClient.SkuType.SUBS)
-                handlePurchases(result?.purchasesList)
+            billingClient.querySkuDetailsAsync(params) { result: BillingResult, list: MutableList<SkuDetails>? ->
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    list?.forEach {
+                        if (it.sku == application.getString(R.string.lifetime_subscription_sku)) {
+                            lifetimeDetails.postValue(it)
+                            lifetimeDetailsAvailables.set(true)
+                        }
+                    }
+
+                    if (detailsAvailables.get() && lifetimeDetailsAvailables.get()) {
+                        ready.postValue(true)
+                    }
+                }
             }
         } else  {
             updateState(false)
-            Log.d(LOG_TAG, "onBillingSetupFinished with failure response code: $responseCode")
+            Log.d(LOG_TAG, "onBillingSetupFinished with failure response code: ${p0.responseCode}")
         }
     }
 
-     // Disconnected from the Play BillingClient
+    // Disconnected from the Play BillingClient
     override fun onBillingServiceDisconnected() {
         updateState(false)
         RetryPolicies.connectionRetryPolicy { billingClient.startConnection(this) }
     }
 
-    fun querySkuDetailsAsync(listener: (responseCode: Int, skuDetailsList: List<SkuDetails>?) -> Unit) {
-        val params = SkuDetailsParams
-                .newBuilder()
-                .setSkusList(listOf(application.getString(R.string.subscription_sku)))
-                .setType(BillingClient.SkuType.SUBS)
-                .build()
-        billingClient.querySkuDetailsAsync(params, listener)
-    }
-
     private fun handlePurchases(purchasesList: List<Purchase>?) {
-        if (purchasesList==null)
+        if (purchasesList == null)
             return
 
-        purchasesList.forEach {
-            if (it.sku == application.getString(R.string.subscription_sku)) {
-                updateSubscribedState(true)
+        if (purchasesList.isNotEmpty()) {
+            purchasesList.forEach { purchase ->
+                if (!purchase.isAcknowledged) {
+                    val purchaseParams = AcknowledgePurchaseParams.newBuilder()
+                            .setPurchaseToken(purchase.purchaseToken)
+                            .build()
+
+                    billingClient.acknowledgePurchase(purchaseParams)  {
+                    }
+                }
+
+                if (purchase.purchaseState == Purchase.PurchaseState.PENDING)
+                    return
+
+                purchase.skus.forEach { sku ->
+                    when (sku) {
+                        application.getString(R.string.subscription_sku) -> {
+                            subscribed.postValue(true)
+                        }
+                        application.getString(R.string.lifetime_subscription_sku) -> {
+                            isLifetime.postValue(true)
+                            subscribed.postValue(true)
+                        }
+                    }
+                }
             }
         }
     }

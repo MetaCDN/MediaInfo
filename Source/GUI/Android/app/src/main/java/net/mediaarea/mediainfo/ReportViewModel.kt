@@ -16,7 +16,7 @@ class ReportViewModel(private val dataSource: ReportDao) : ViewModel() {
         return dataSource.getLastId()
     }
 
-    fun getReport(id: Int): Flowable<Report> {
+    fun getReport(id: Int): Single<Report> {
         return dataSource.getReport(id)
     }
 
@@ -52,11 +52,9 @@ class ReportViewModel(private val dataSource: ReportDao) : ViewModel() {
         }
     }
 
-    /* unused
     fun deleteAllReports(): Completable {
         return Completable.fromAction {
             dataSource.deleteAllReports()
         }
     }
-    */
 }

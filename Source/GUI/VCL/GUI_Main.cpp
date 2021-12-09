@@ -20,6 +20,10 @@
 #ifndef MEDIAINFOGUI_ABOUT_NO
     #include "GUI/VCL/GUI_About.h"
 #endif
+#ifndef MEDIAINFOGUI_PLUGIN_NO
+    #include "GUI/VCL/GUI_Plugin.h"
+#endif
+
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
@@ -176,7 +180,7 @@ void __fastcall TMainF::GUI_Configure()
     if (Screen->Width>=1024)
         Width=700;
     if (Screen->Width>=1280)
-        Width=820;
+        Width=830;
     if (Screen->Height>=768)
         Height=500;
     if (Screen->Height>=1024)
@@ -215,6 +219,7 @@ void __fastcall TMainF::GUI_Configure()
     else if (Prefs->Config(__T("Output"))==__T("XML")) {M_View_XMLClick(NULL); M_View_XML->Checked=true;}
     else if (Prefs->Config(__T("Output"))==__T("MIXML")) {M_View_XMLClick(NULL); M_View_XML->Checked=true;}
     else if (Prefs->Config(__T("Output"))==__T("JSON")) {M_View_JSONClick(NULL); M_View_JSON->Checked=true;}
+    else if (Prefs->Config(__T("Output"))==__T("Graph_Svg")) {M_View_Graph_SvgClick(NULL); M_View_Graph_Svg->Checked=true;}
     else if (Prefs->Config(__T("Output"))==__T("MPEG-7")) {M_View_MPEG7Click(NULL); M_View_MPEG7->Checked=true;}
     else if (Prefs->Config(__T("Output"))==__T("PBCore_1.2")) {M_View_PBCoreClick(NULL); M_View_PBCore->Checked=true;}
     else if (Prefs->Config(__T("Output"))==__T("PBCore_2.0")) {M_View_PBCore2Click(NULL); M_View_PBCore2->Checked=true;}
@@ -593,10 +598,12 @@ void __fastcall TMainF::Translate()
         }
         */
     }
-    //if (Prefs->Donated) //No more
+
+    M_Sponsor->Visible=false;
+    if (Prefs->Sponsored && !Prefs->Donated && !Prefs->Translate(__T("SponsorMessage")).empty() && !Prefs->Translate(__T("SponsorMessage")).empty())
     {
-        M_Tektronix->Visible=false;
-        Tool_Tektronix->Visible=false;
+        M_Sponsor->Caption =  + Prefs->Translate(__T("SponsorMessage")).c_str();
+        M_Sponsor->Visible=true;
     }
 }
 
@@ -696,6 +703,7 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
         Page_Tree_Tree->Items->Clear();
         TTreeNode* Top=NULL;
 
+        I->Option(__T("File_ExpandSubs"), __T("1"));
         for (size_t FilePos=0; FilePos<FilesCount; FilePos++)
         {
             //Pour chaque fichier
@@ -719,6 +727,10 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
                         A+=B;
                     }
                     TTreeNode* Node=Page_Tree_Tree->Items->AddChild(Parent, A.c_str());
+
+                    std::vector<TTreeNode*> Tree;
+                    Tree.push_back(Node);
+
                     unsigned ChampsCount=I->Count_Get(FilePos, (stream_t)StreamKind, StreamPos);
                     for (size_t Champ_Pos=0; Champ_Pos<ChampsCount; Champ_Pos++)
                     {
@@ -734,13 +746,29 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
                             if (D.empty())
                                 D=I->Get(FilePos, (stream_t)StreamKind, StreamPos, Champ_Pos, Info_Name); //Texte n'existe pas
                             //Affichage
-                            Page_Tree_Tree->Items->AddChild(Node, (D + __T(": ") + A.c_str()).c_str());
+                            size_t Level=D.find_first_not_of(__T(' '));
+
+                            bool Hide=false;
+                            if (A==__T("Yes") && Champ_Pos+1<ChampsCount)
+                                Hide=I->Get(FilePos, (stream_t)StreamKind, StreamPos, Champ_Pos+1, Info_Name_Text).find_first_not_of(__T(' '))>Level;
+
+                            if (Level && Level!=(size_t)-1)
+                                D=D.substr(Level);
+
+                            if(Level==Tree.size() && Tree.back()->GetLastChild())
+                                Tree.push_back(Tree.back()->GetLastChild());
+                            else if(Level<Tree.size()-1)
+                                Tree.resize(Level+1);
+
+                            Page_Tree_Tree->Items->AddChild(Tree.back(), Hide?D.c_str():(D + __T(": ") + A).c_str());
                         }
                     }
+                    Node->Expand(false);
                 }
             }
+            Parent->Expand(false);
         }
-        Page_Tree_Tree->FullExpand();
+        I->Option(__T("File_ExpandSubs"), __T("0"));
         if (Top)
             Top->MakeVisible();
         Page_Tree_Tree->Visible=true;
@@ -761,6 +789,13 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
             I->Option_Static(__T("Inform"), __T("Details;1"));
         else
             I->Option_Static(__T("Inform"));
+
+        if (!Prefs->Config(__T("InformVersion")).empty())
+            I->Option_Static(__T("Inform_Version"), Prefs->Config(__T("InformVersion")));
+
+        if (!Prefs->Config(__T("InformTimestamp")).empty())
+            I->Option_Static(__T("Inform_Timestamp"), Prefs->Config(__T("InformTimestamp")));
+
         Page_Text_Text->Text=I->Inform().c_str();
 
         //Specific in case of no file
@@ -807,6 +842,16 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
             I->Option_Static(__T("Inform"), __T("MIXML"));
         else if (M_View_JSON->Checked)
             I->Option_Static(__T("Inform"), __T("JSON"));
+        else if (M_View_Graph_Svg->Checked)
+        {
+            if (!Prefs->Config(__T("Graph_Adm_ShowTrackUIDs")).empty())
+                I->Option_Static(__T("Graph_Adm_ShowTrackUIDs"), Prefs->Config(__T("Graph_Adm_ShowTrackUIDs")));
+
+            if (!Prefs->Config(__T("Graph_Adm_ShowChannelFormats")).empty())
+                I->Option_Static(__T("Graph_Adm_ShowChannelFormats"), Prefs->Config(__T("Graph_Adm_ShowChannelFormats")));
+
+            I->Option_Static(__T("Inform"), __T("Graph_Svg"));
+        }
         else if (M_View_MPEG7->Checked)
             I->Option_Static(__T("Inform"), __T("MPEG-7"));
         else if (M_View_PBCore->Checked)
@@ -839,7 +884,67 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
             I->Option_Static(__T("Inform"), Prefs->Details[Prefs_Custom].Read());
         Ztring S1=I->Inform();
         if (S1.empty())
-            S1=Prefs->Translate(__T("At least one file")).c_str();
+			S1=Prefs->Translate(__T("At least one file")).c_str();
+
+        if (I->Option_Static(__T("Inform_Get"), __T("")) == __T("Graph_Svg"))
+        {
+            S1 = Ztring();
+
+            Ztring InstallFolder = Application->ExeName.c_str();
+            InstallFolder = InstallFolder.substr(0, InstallFolder.rfind(__T("\\")) + 1);
+
+            Ztring State=I->Option_Static(__T("Info_Graph_Svg_Plugin_State"), __T(""));
+            if (State == __T("0") || !File::Exists(InstallFolder+__T("\\Plugin\\Graph\\Template.html"))) //Try to install plugin
+            {
+                TPluginF* P = new TPluginF(this, PLUGIN_GRAPH);
+                if (P->Configure())
+                    P->ShowModal();
+                delete P;
+
+                State = I->Option_Static(__T("Info_Graph_Svg_Plugin_State"), __T(""));
+            }
+
+            if (State == __T("1"))
+            {
+                for (size_t Pos = 0; Pos < I->Count_Get(); Pos++)
+                {
+                    Ztring Svg = I->Inform(Pos);
+                    size_t Pos = Svg.find(__T("<svg"));
+                    if (Pos != std::string::npos)
+                        Svg = Svg.substr(Pos);
+                    S1 += (Pos ? __T("<br/>") : __T("")) + Svg;
+                }
+
+                if (File::Exists(InstallFolder+__T("\\Plugin\\Graph\\Template.html")))
+                {
+                    File F(InstallFolder+__T("\\Plugin\\Graph\\Template.html"));
+                    int8u* Buffer=new int8u[(size_t)F.Size_Get()+1];
+                    size_t Count=F.Read(Buffer, (size_t)F.Size_Get());
+                    if (Count==Error)
+                    {
+                        delete[] Buffer; //Buffer=NULL;
+                        S1=__T("Unable to load graph template");
+                    }
+                    else
+                    {
+                        Buffer[Count]=(int8u)'\0';
+                        Ztring Template=Ztring().From_UTF8((char*)Buffer);
+                        if (Template.FindAndReplace(__T("@SVG@"), S1)==0)
+                            S1=__T("Invalid template");
+                        else
+                            S1=Template;
+                    }
+                    delete[] Buffer; //Buffer=NULL;
+                }
+                else
+                    S1=__T("Graph template not found");
+            }
+            else if (State == __T("0"))
+                S1 = __T("Graph plugin not installed");
+            else
+                S1 = State;
+        }
+
         if (S1.size()>1 && S1[0]=='<' && S1[1]=='h')
         {
             //Supposing this is HTML
@@ -922,8 +1027,6 @@ void __fastcall TMainF::Refresh(TTabSheet *Page)
         //0 fichier
     {
         Caption=MEDIAINFO_TITLE;
-        if (Prefs->Donated)
-            Caption+=" - Sponsored by Tektronix";
     }
     else if (FilesCount==1)
         //un fichier
@@ -1150,6 +1253,14 @@ void __fastcall TMainF::M_View_NISO_Z39_87Click(TObject *Sender)
 {
     M_View_NISO_Z39_87->Checked=true;
     ToolBar_View_NISO_Z39_87->Checked=true;
+    ChangePage(Page_Custom);
+}
+
+//---------------------------------------------------------------------------
+void __fastcall TMainF::M_View_Graph_SvgClick(TObject *Sender)
+{
+    M_View_Graph_Svg->Checked=true;
+    ToolBar_View_Graph_Svg->Checked=true;
     ChangePage(Page_Custom);
 }
 
@@ -1779,9 +1890,8 @@ void __fastcall TMainF::M_NewVersionClick(TObject *Sender)
     ShellExecute(NULL, NULL, (Ztring(__T("http://mediaarea.net/"))+Prefs->Translate(__T("  Language_ISO639"))+__T("/MediaInfo/?NewVersionRequested=true")).c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
-void __fastcall TMainF::M_TektronixClick(TObject *Sender)
-{
-    ShellExecute(NULL, NULL, __T("http://www.tek.com/file-based-qc-solutions"), NULL, NULL, SW_SHOWNORMAL);
-}
 //---------------------------------------------------------------------------
-
+void __fastcall TMainF::M_SponsorClick(TObject *Sender)
+{
+    ShellExecute(NULL, NULL, Prefs->Translate(__T("SponsorUrl")).c_str(), NULL, NULL, SW_SHOWNORMAL);
+}

@@ -34,6 +34,7 @@
  day1; dag
  day2; dagen
  day3; dagen
+ dB0;
  dB1; dB
  dB2; dB
  dB3; dB
@@ -117,6 +118,9 @@
  month1; maand
  month2; maanden
  month3; maanden
+ object1;
+ object2;
+ object3;
  pixel1; pixel
  pixel2; pixels
  pixel3; pixels
@@ -153,9 +157,14 @@ ActiveFormatDescription;
 ActiveFormatDescription_MuxingMode;
 Actor;Acteur
 Actor_Character;Personage
+Add creation date to text output;
+Add version to text output;
 Added_Date; Toegevoegde datum
 Address;Adres
 AdID;
+ADM: Show ChannelFormats;
+ADM: Show TrackUIDs;
+AdmProfile;
 Advanced;Geavanceerd
 Advanced mode;Geavanceerde modus
 Album;Album
@@ -181,9 +190,12 @@ Audio1;Eerste audiostroom
 Audio2;Tweede audiostroom
 AudioComments;
 AudioCount;Telling van audiostromen
+AudioDescription;
 AudioDescriptionPresent;
 AudioDescriptionType;
 AudioLoudnessStandard;
+AudioRenderingIndication;
+AudioSceneInfoID;
 AudioTrackLayout;
 Author;Auteur
 BarCode;Streepjescode
@@ -206,7 +218,10 @@ Bits-(Pixel*Frame);Bits/(Pixel*Frame)
 BufferSize;
 Cancel;Annuleren
 Channel(s);Kanaal(en)
+ChannelCoded;
+ChannelConfiguration;
 ChannelLayout;
+ChannelMode;
 ChannelPositions;Kanaalposities
 Chapter(s);Hoofdstuk(ken)
 Chapters;Hoofdstukken
@@ -225,6 +240,8 @@ Choose language;Kies uw gewenste taal
 Choreographer;Choreograaf
 Chroma;Chroma
 ChromaSubsampling;
+Classifier;
+ClearList;
 Close;Sluiten
 Close all before open;Sluit alle alvorens te openen
 ClosedCaptionsLanguage;
@@ -269,6 +286,7 @@ Compression_Mode_Lossless;
 Compression_Mode_Lossy;
 Compression_Ratio;Compressieverhouding
 Conductor;Dirigent
+ConformanceCheck;
 ContactEmail;
 ContactTelephoneNumber;
 Container and general information;Container en algemene informatie
@@ -287,15 +305,22 @@ Cover_Type;Coversoort
 Cropped;Cropafmetingen
 Custom;Aangepast
 Customize;Aanpassen
+DarkMode;
 Date;Datum
 Debug;Debug
 Decimal point;Decimale punt
+Default_Setting;
+DefaultTargetDeviceConfig;
 Delay;Vertraging
 Delay_Source;
 Delay_Source_Container;
 Delay_Source_Stream;
 Delete;Verwijderen
 Description;Beschrijving
+dialnorm;
+DialogueCorrected;
+DialogueEnhancement;
+DialogueNormalization;
 Digitized_Date;Digitaliseringsdatum
 Dimensions;Afmetingen
 Director;Regisseur
@@ -306,13 +331,20 @@ DisplayAspectRatio_CleanAperture;
 DisplayAspectRatio_Original;Originele beeldverhouding
 DistributedBy;Gedistribueerd door
 Distributor;
+DolbyAtmos;
 Donate;Doneren
 DotsPerInch;Punten per inch
+Downmix;
+DrcSets_Count;
+DrcSets_Effects;
 Duration;Duur
 Duration_End;
 Duration_Start;
+DynamicRangeControl;
+Eac3DrcProfile;
 Edit;Bewerken
 EditedBy;Bewerkt door
+EditorialClassification;
 ElementCount;
 EMail;E-Mail
 Encoded_Application;Gebruikt programma
@@ -324,12 +356,14 @@ EncodedBy;Gecodeerd door
 EPG_Positions;
 EpisodeTitleNumber;
 Error_File;Fout tijdens lezen bestand
+Error_File_Write;
 ExecutiveProducer;Uitvoerend producent
 Exit;Afsluiten
 Exit_Hint;Beëindig het programma
 Export;Exporteren
 Export_Hint;Exporteren in aangepast formaat
 Extensions;Gebruikelijke extensies
+External_Media_NotMounted;
 Family;Familie
 Fax;Fax
 File;Bestand
@@ -344,6 +378,7 @@ FileExtension;Bestandsextensie
 FileName;Bestandsnaam
 FileNameExtension;
 FileSize;Bestandsgrootte
+FlatPanelTv;
 Folder;Map
 Folder (R);Map (R)
 Folder (R)_Hint;Kies een te onderzoeken map (inclusief onderliggende mappen)
@@ -353,6 +388,7 @@ FolderName;Mapnaam
 Format;Formaat
 Format_Commercial;
 Format_Commercial_IfAny;
+Format_Compression;
 Format_Description;Formaatbeschrijving
 Format_Info;Details over formaat
 Format_Level;
@@ -398,6 +434,7 @@ FrameRate_Mode_CFR;Constant
 FrameRate_Mode_VFR;Variabel
 FrameRate_Nominal;Nominale framrate
 FrameRate_Original;Originele framerate
+FrameRate_Real;
 General;Algemeen
 Genre;Muziekstijl
 Genre_000;Blues
@@ -597,7 +634,10 @@ Gop_OpenClosed;
 Gop_OpenClosed_Closed;
 Gop_OpenClosed_FirstFrame;Grouping
 Gop_OpenClosed_Open;
+Graph;
+Group;
 Grouping;
+GroupPreset;
 h; h
 HDR_Format;
 Header file;Headerbestand maken
@@ -606,6 +646,7 @@ Height_CleanAperture;
 Height_Original;
 Help;Help
 Hint;Hint
+HomeTheaterAvr;
 How many audio streams?;Hoeveel audiostromen?
 How many chapters streams?;Hoeveel hoofdstukstromen?
 How many text streams?;Hoeveel tekststromen?
@@ -613,12 +654,17 @@ How many video streams?;Hoeveel videostromen?
 HTML;HTML
 ID;ID
 IdentClockStart;
+IFrameInterval;
 Image;Video
 Image stream(s);Videostromen
 Image_Codec_List;Videocodecs
 ImageCount;Telling van videostromen
+ImmersiveStereo;
 Info;Info
 Instruments;Instrumenten
+IntegratedLoudness_Level;
+IntegratedLoudness_Speech;
+InteractivityEnabled;
 Interlaced_BFF;Onderste Veld Eerst
 Interlaced_Interlaced;Interlaced
 Interlaced_PPF;Progressief
@@ -705,6 +751,7 @@ Language_hr;Kroatisch
 Language_ht;Haïtiaans
 Language_hu;Hongaars
 Language_hy;Armeens
+Language_hy-az;
 Language_hz;Herero
 Language_ia;Interlingua
 Language_id;Indonesisch
@@ -749,10 +796,12 @@ Language_mi;Maori
 Language_mk;Macedonisch
 Language_ml;Malayalam
 Language_mn;Mongools
+Language_mn-cn;
 Language_mo;Moldavisch
 Language_More;Taal, meer info
 Language_mr;Marathi
 Language_ms;Maleis
+Language_ms-bn;
 Language_mt;Maltees
 Language_mul;Meerdere talen
 Language_my;Burmees
@@ -762,6 +811,7 @@ Language_nd;Ndebele
 Language_ne;Nepalees
 Language_ng;Ndonga
 Language_nl;Nederlands
+Language_nl-be;
 Language_nn;Noors Bokmal
 Language_no;Noors
 Language_nr;Ndebele
@@ -793,6 +843,7 @@ Language_si;Sinhala
 Language_sk;Slowaaks
 Language_sl;Sloveens
 Language_sm;Samoaans
+Language_smi;
 Language_sn;Shona
 Language_so;Somalisch
 Language_sq;Albanees
@@ -835,10 +886,44 @@ Language_zh-tw;Chinees (Taiwan)
 Language_zu;Zoeloe
 LawRating;Wettelijke rating
 LCCN;LCCN
+LfeAttenuationKnown;
+LfeMixGain;
 Library;Muxingbibliotheek
+Lifetime_Subscribe_Button;
 Lightness;Helderheid
 LineUpStart;
+LinkedTo_Bed_Pos;
+LinkedTo_ChannelFormat_Pos;
+LinkedTo_Content_Pos;
+LinkedTo_Group_Pos;
+LinkedTo_Object_Pos;
+LinkedTo_PackFormat_Pos;
+LinkedTo_SignalGroup_Pos;
+LinkedTo_Substream_Pos;
+LinkedTo_TrackUID_Pos;
 List;Lijst
+LoRoCenterMixGain;
+LoRoSurroundMixGain;
+Loudness_Anchor;
+Loudness_Anchor_Album;
+Loudness_Count;
+Loudness_Count_Album;
+Loudness_MaximumMomentary;
+Loudness_MaximumMomentary_Album;
+Loudness_MaximumOfRange;
+Loudness_MaximumOfRange_Album;
+Loudness_MaximumShortTerm;
+Loudness_MaximumShortTerm_Album;
+Loudness_ProductionMixingLevel;
+Loudness_ProductionMixingLevel_Album;
+Loudness_Program;
+Loudness_Program_Album;
+Loudness_Range;
+Loudness_Range_Album;
+Loudness_RoomType;
+Loudness_RoomType_Album;
+LtRtCenterMixGain;
+LtRtSurroundMixGain;
 Lyricist;Tekstschrijver
 Lyrics;Tekst
 Mastered_Date;Datum van master
@@ -851,7 +936,11 @@ matrix_coefficients;
 Matrix_Format;
 MaxCLL;
 MaxFALL;
+MaxGain;
+MaximumMomentaryLoudness;
+MaxTruePeak;
 MediaInfo_About;Levert zeer gedetailleerde informatie\r\nover multimediabestanden:\r\nMatroska, OGG (inclusief OGM)\r\nMPEG1 (inclusief VCD)\r\nMPEG2 (inclusief DVD en SVCD)\r\nMPEG4 (inclusief Itunes M4A)\r\nQuicktime\r\nRealMedia\r\nWindowsMedia (inclusief WMV, WMA)\r\nMicrosoft RIFF (inclusief AVI, WAV)\r\nGeluidsformaten (AC3, DTS, AAC, AU, AIFF...)
+MediaInfo_About_About;
 Menu;Menu
 Menu stream(s);Menustromen
 Menu_Codec_List;Menucodecs
@@ -859,12 +948,14 @@ Menu_Hint;Meer mogelijkheden
 Menu_No;Geen menu
 MenuCount;Telling van menustromen
 MenuID;Menu-ID
+MixType;
 mn; min
 Mood;Stemming
 More;Meer
 Movie;Filmnaam
 ms; ms
 MSDI;MSDI
+MultipleStream;
 MusicBy;Muziek door
 MuxingMode;Muxingmodus
 MuxingMode_MoreInfo;
@@ -879,8 +970,18 @@ NewVersion_Question_Content;
 NewVersion_Question_Title;
 No;Nee
 Not yet;Nog niet
+NumberOfChannelFormats;
+NumberOfContents;
 NumberOfDynamicObjects;
+NumberOfElementaryStreams;
+NumberOfObjects;
+NumberOfPackFormats;
+NumberOfPresentations;
+NumberOfProgrammes;
+NumberOfSubstreams;
+NumberOfTrackUIDs;
 NumColors;Aantal kleuren
+ObjectCount;
 OK;OK
 One output file per input file;Eén exportbestand per invoerbestand
 Open;Open
@@ -948,6 +1049,8 @@ PartNumber;
 PartTotal;
 Performer;Artiest
 Period;Periode
+Phase90FilterInfo;
+Phase90FilterInfo2ch;
 Phone;Telefoon
 PictureRatio;
 PixelAspectRatio;Pixelverhouding
@@ -959,9 +1062,23 @@ Played_First_Date;Eerst gespeeld
 Played_Last_Date;Laatst gespeeld
 PlayTime;Speeltijd
 PodcastCategory;
+PortableHeadphones;
+PortableSpeakers;
 Position;Positie
+Position_Cartesian;
+Position_Polar;
 Position_Total;Totaal
 Preferences;Voorkeuren
+PreferredDownmix;
+Premium;
+Premium_Summary;
+PreselectionLabel;
+Presentation;
+PresentationConfig;
+PresentationConfig_ContentClassifier;
+PresentationID;
+PreviousDownmixType5ch;
+PreviousMixType2ch;
 PrimaryAudioLanguage;
 Producer;Producent
 ProductionDesigner;Productieontwerper
@@ -976,14 +1093,21 @@ Purchased_Date;Aankoopdatum
 Quote character;Aanhalingsteken
 RadioStation;Radiostation
 Rating;Waardering
+RealtimeLoudnessCorrected;
 Recorded_Date;Opnamedatum
 Recorded_Location;Opnamelocatie
 Released_Date;Releasedatum
 RemixedBy;Geremixed door
+RenderMode;
+Renew;
 ReplayGain_Gain;Replay gain
 ReplayGain_Peak;Replay gain piek
+Report;
 Resolution;Resolutie
+RestoreLifetimeSubscription;
 s;s
+SamplePeakLevel;
+SamplePeakLevel_Album;
 SamplesPerFrame;
 SamplingCount;
 SamplingRate;Samplerate
@@ -1022,9 +1146,11 @@ ShimName;
 ShimVersion;
 Show menu;Menu tonen
 Show toolbar;Werkbalk tonen
+SignalGroup;
 SigningPresent;
 SignLanguage;
 Sort;Gesorteerd op
+SoundCategory;
 SoundEngineer;Geluidstechnicus
 Source;
 Source_Duration;
@@ -1032,6 +1158,7 @@ Source_FrameCount;
 Source_SamplingCount;
 Source_StreamSize;
 Source_StreamSize_Encoded;
+SpokenSubtitles;
 Standard;Standaard
 StoreMethod_InterleavedFields;
 StoreMethod_SeparatedFields;
@@ -1041,6 +1168,7 @@ Stream;Stroom
 Stream_MoreInfo;Meer informatie over de stroom
 StreamCount;Telling van dit soort stromen
 StreamID;Stroom-ID
+streamIdentifier;
 StreamKind;Soort stroom
 StreamKindID;Stroomidentifier
 StreamKindPos;Stroomidentifier
@@ -1049,14 +1177,34 @@ StreamSize_Demuxed;
 StreamSize_Encoded;
 StreamSize_Proportion;Proporties van deze stroom
 Subject;Onderwerp
+Subscribe;
+Subscribe_Button;
+Subscribe_Failed;
+Subscribe_Manage;
+Subscribe_Renew;
+Subscribe_Renew_Price;
+Subscribe_Unaviable;
+Subscribe_Waiting;
+Subscription_Active;
+Subscription_Android;
+Subscription_Ended;
+Subscription_Expired;
+Subscription_Lifetime;
+Subscription_Thanks;
+Substream;
 SubTrack;Ondertiteling
+SubtstreamIdChannel;
 Summary;Samenvatting
 Supported formats;Ondersteunde formaten
 Supported?;Ondersteund?
+SupportUs;
+SurroundAttenuationKnown;
+SwitchGroup;
 Synopsis;Samenvatting
 SystemId;Id
 Tagged_Application;Tagapplicatie
 Tagged_Date;Tagdatum
+TargetDeviceConfig;
 Technician;Technicus
 TermsOfUse;Gebruiksvoorwaarden
 TertiaryAudioLanguage;
@@ -1089,10 +1237,14 @@ TotalProgrammeDuration;
 Track;Tracknaam
 Track_Count;Tracktelling
 transfer_characteristics;
+Translate_Reports;
 Translator;Vertaler
 Tree;Boomstructuur
 Tree & Text;Boomstructuur & Tekst
+TruePeakLevel;
+TruePeakLevel_Album;
 Type;
+TypeDefinition;
 UniqueID;
 UniversalAdID;
 UniversalAdID_Registry;
@@ -1110,8 +1262,10 @@ VideoComments;
 VideoCount;Telling van videostromen
 View;Beeld
 View_Hint;Verander de weergave van informatie
+Views;
 Warning : more streams in the files;Waarschuwing : er zijn meer stromen in de bestanden
 Web;Web
+WebSite;
 WebSite_Audio;Ga naar de website van deze audiocodec
 WebSite_Audio_More;Ga naar de website (%Url%) om deze audiocodec te vinden
 WebSite_General;Ga naar de website van een speler voor dit bestand
@@ -1131,5 +1285,5 @@ Written_Location;Locatie van schrijven
 WrittenBy;Geschreven door
 Yes;Ja
 Your system;Uw systeem
-ZZ_Automatic_Percent;81
-ZZ_AutomaticLanguage_Percent;85
+ZZ_Automatic_Percent;72
+ZZ_AutomaticLanguage_Percent;75

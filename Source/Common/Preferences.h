@@ -32,7 +32,7 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-#define MediaInfo_Version_GUI __T("19.04")
+#define MediaInfo_Version_GUI __T("21.09")
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
@@ -59,6 +59,8 @@ public:
     ZenLib::ZtringListListF Config;     //Configuration file
     ZenLib::ZtringList      FilesList[Prefs_Max];  //List of available files for an Item
     ZenLib::ZtringListListF Details[Prefs_Max];
+    ZenLib::ZtringListList  SponsorMessage;
+    ZenLib::ZtringListList  SponsorUrl;
 
     //Useful functions about preferences
     int Config_Create       ();
@@ -73,13 +75,13 @@ public:
 
     //Related to user preferences - Action only if Preferences are OK
     int InternetCheck       (); //Test if there is new update
-    int ExplorerShell       (); //To be availble with right clic in Explorer
+    int ExplorerShell       (); //To be available with right click in Explorer
     int ShellToolTip        (); //To be available with mouse in Explorer
 
     //Special things
     ZenLib::Ztring &Translate (ZenLib::Ztring Name); //return in the good language, or in English if not found
 
-    //Info abou Lists
+    //Info about Lists
     ZenLib::ZtringList FolderNames;  //List of list_t --> Foldernames
     ZenLib::ZtringList DefaultNames; //List of list_t --> Default Filenames for a kind
 
@@ -87,6 +89,13 @@ public:
     bool Donated;
     bool Donate_Display;
     bool NewVersion_Display;
+
+    //Sponsor
+    bool Sponsored;
+
+    //Plugins
+    ZenLib::Ztring GraphPluginURL;
+    ZenLib::Ztring GraphPluginVersion;
 };
 
 //General preference for the whole program

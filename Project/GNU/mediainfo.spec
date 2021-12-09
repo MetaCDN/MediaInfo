@@ -1,13 +1,13 @@
-%global mediainfo_version           19.04
-%global mediainfo_version_major     19
-%global mediainfo_version_minor     04
-%global libmediainfo_version        19.04
-%global libmediainfo_version_major  19
-%global libmediainfo_version_minor  04
-%global libzen_version              0.4.37
+%global mediainfo_version           21.09
+%global mediainfo_version_major     21
+%global mediainfo_version_minor     09
+%global libmediainfo_version        21.09
+%global libmediainfo_version_major  21
+%global libmediainfo_version_minor  09
+%global libzen_version              0.4.39
 %global libzen_version_major        0
 %global libzen_version_minor        4
-%global libzen_version_release      37
+%global libzen_version_release      39
 
 %if 0%{?fedora_version} || 0%{?centos_version} >= 600 || 0%{?rhel_version} >= 600
 %global libmediainfo_name libmediainfo
@@ -56,6 +56,14 @@ BuildRequires:  sane-backends-iscan
 BuildRequires:  libuuid-devel
 %endif
 
+%if 0%{?mageia} > 6
+%ifarch x86_64
+BuildRequires: lib64openssl-devel
+%else
+BuildRequires: libopenssl-devel
+%endif
+%endif
+
 # wxWidgets package name
 %if 0%{?suse_version} && 0%{?suse_version} >= 1140
 BuildRequires:  wxWidgets-devel
@@ -63,7 +71,7 @@ BuildRequires:  wxWidgets-devel
 %if 0%{?mageia}
 BuildRequires:  wxgtk2.8-devel
 %else
-%if 0%{?fedora_version} && 0%{?fedora_version} >= 29
+%if (0%{?fedora_version} && 0%{?fedora_version} >= 29) || 0%{?centos_version} >= 800
 BuildRequires:  wxGTK3-devel
 %else
 BuildRequires:  wxGTK-devel
@@ -130,7 +138,7 @@ Requires:   wxWidgets
 %if 0%{?mageia}
 Requires:  wxgtk2.8
 %else
-%if 0%{?fedora_version} && 0%{?fedora_version} >= 29
+%if (0%{?fedora_version} && 0%{?fedora_version} >= 29) || 0%{?centos_version} >= 800
 Requires:   wxGTK3
 %else
 Requires:   wxGTK
@@ -198,8 +206,8 @@ pushd Project/GNU/GUI
 popd
 
 %build
-export CFLAGS="%{optflags}"
-export CXXFLAGS="%{optflags}"
+export CFLAGS="-g %{optflags}"
+export CXXFLAGS="-g %{optflags}"
 
 # build CLI
 pushd Project/GNU/CLI

@@ -34,7 +34,7 @@ using namespace ZenLib;
 
 //---------------------------------------------------------------------------
 Preferences* Prefs=new Preferences;
-int ExplorerShell_Edit  (const AnsiString &Name, bool ShellExtension, bool &IsChanged, TRegistry* Reg);
+int ExplorerShell_Edit  (const AnsiString &Name, bool ShellExtension, bool &IsChanged);
 //---------------------------------------------------------------------------
 
 //***************************************************************************
@@ -65,6 +65,15 @@ Preferences::Preferences()
     //Donate
     Donated=false;
     Donate_Display=true;
+
+    //Sponsor
+    Sponsored=false;
+    SponsorMessage=__T("");
+    SponsorUrl=__T("");
+
+    //Plugins
+    GraphPluginURL=__T("");
+    GraphPluginVersion=__T("");
 }
 
 //***************************************************************************
@@ -193,6 +202,25 @@ int Preferences::Config_Load()
     if ((int64u)time(NULL)-Config(__T("Install")).To_int64u()<7*24*60*60)
         Donate_Display=false;
 
+    // Sponsor
+    if (Config(__T("Sponsored"))==__T("1"))
+    {
+        Sponsored=true;
+
+        Ztring Saved=Config(__T("SponsorMessage"));
+        Saved.FindAndReplace(__T("\\r\\n"), __T("\r\n"), 0, Ztring_Recursive);
+        SponsorMessage.Write(Saved);
+
+        Saved=Config(__T("SponsorUrl"));
+        Saved.FindAndReplace(__T("\\r\\n"), __T("\r\n"), 0, Ztring_Recursive);
+        SponsorUrl.Write(Saved);
+    }
+
+    if (!Config(__T("GraphPluginURL")).empty())
+        GraphPluginURL=Config(__T("GraphPluginURL"));
+
+    if (!Config(__T("GraphPluginVersion")).empty())
+        GraphPluginVersion=Config(__T("GraphPluginVersion"));
 
     delete Reg_User; Reg_User=NULL;
 
@@ -220,6 +248,7 @@ int Preferences::Config_Save()
     if (Config(__T("FirstInstall")).empty()) Config(__T("FirstInstall")).From_Number((int64u)time(NULL));
     if (Config(__T("Donated")).empty()) Config(__T("Donated"))=__T("0");
     if (Config(__T("Donate_Display")).empty()) Config(__T("Donate_Display"))=__T("1");
+    if (Config(__T("Sponsored")).empty()) Config(__T("Sponsored"))=__T("0");
 
     HANDLE Temp=CreateFile((BaseFolder+__T("MediaInfo.cfg")).c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if (Temp==INVALID_HANDLE_VALUE)
@@ -450,6 +479,46 @@ void __fastcall ThreadInternetCheck::Execute()
         Prefs->Config_Save();
     }
 
+    //Sponsored
+    Prefs->Config(__T("Sponsored"))=__T("0");
+    Prefs->Config(__T("SponsorMessage"))=__T("");
+    Prefs->Config(__T("SponsorUrl"))=__T("");
+
+    ZtringListList Sponsor=Download.SubSheet(__T("ShowSponsor"));
+    if (int En=Sponsor.Find(__T("en"), 1)!=-1 && Sponsor[En](2)!=__T("") && Sponsor[En](3)!=__T(""))
+    {
+        Prefs->Config(__T("Sponsored"))=__T("1");
+        Ztring Message;
+        Ztring Url;
+        for (size_t Pos=0; Pos<Sponsor.size(); Pos++)
+        {
+            if (Sponsor[Pos](1)!=__T(""))
+            {
+                if (Sponsor[Pos](2)!=__T(""))
+                    Message+=(Message.empty()?__T(""):__T("\\r\\n"))+Sponsor[Pos](1)+__T(";")+Sponsor[Pos](2);
+                if (Sponsor[Pos](3)!=__T(""))
+                    Url+=(Url.empty()?__T(""):__T("\\r\\n"))+Sponsor[Pos](1)+__T(";")+Sponsor[Pos](3);
+            }
+        }
+        Prefs->Config(__T("SponsorMessage"))=Message.Quote();
+        Prefs->Config(__T("SponsorUrl"))=Url.Quote();
+    }
+    Prefs->Config_Save();
+
+    //Plugins
+    Ztring GraphPluginURL=Download(__T("GraphPluginURL"));
+    if (!GraphPluginURL.empty())
+    {
+        Prefs->Config(__T("GraphPluginURL"))=GraphPluginURL;
+        Prefs->Config_Save();
+    }
+
+    Ztring GraphPluginVersion=Download(__T("GraphPluginVersion"));
+    if (!GraphPluginVersion.empty())
+    {
+        Prefs->Config(__T("GraphPluginVersion"))=GraphPluginVersion;
+        Prefs->Config_Save();
+    }
     //Chargement de pages
     ZtringListList Pages=Download.SubSheet(__T("Url"));
     for (size_t Pos=0; Pos<Pages.size(); Pos++)
@@ -485,7 +554,7 @@ int Preferences::ExplorerShell()
     List=__T(
         ".264;H264File\r\n"
         ".3g2;mpeg4File\r\n"
-        ".3ga;mpeg4File\r\n"    
+        ".3ga;mpeg4File\r\n"
         ".3gp;mpeg4File\r\n"
         ".3gpa;mpeg4File\r\n"
         ".3gpp;mpeg4File\r\n"
@@ -520,8 +589,8 @@ int Preferences::ExplorerShell()
         ".dvr-ms;DVRMSFile\r\n"
         ".eac3;EAC3File\r\n"
         ".evo;EVOFile\r\n"
-        ".f4a;mpeg4File\r\n"  
-        ".f4b;mpeg4File\r\n" 
+        ".f4a;mpeg4File\r\n"
+        ".f4b;mpeg4File\r\n"
         ".f4v;mpeg4File\r\n"
         ".fla;FLACFile\r\n"
         ".flc;FLICFile\r\n"
@@ -606,6 +675,7 @@ int Preferences::ExplorerShell()
         ".tiff;TIFFFile\r\n"
         ".tmf;mpegFile\r\n"
         ".tp;TPFile\r\n"
+        ".trec;mpeg4File\r\n"
         ".trp;TRPFile\r\n"
         ".ts;tsFile\r\n"
         ".tta;TTAFile\r\n"
@@ -677,7 +747,8 @@ int Preferences::ExplorerShell()
             if (Reg->OpenKey(List(I1, 0).c_str(), false))
             {
                 //test if extension is known
-                AnsiString Player=Reg->ReadString(__T(""));
+                AnsiString Player;
+                try {Player=Reg->ReadString("");} catch (...){}
                 Reg->CloseKey();
 
                 //Test if old Media Info shell extension is known
@@ -705,7 +776,8 @@ int Preferences::ExplorerShell()
             if (Reg_User->OpenKey((Ztring(__T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\"))+List(I1, 0)+__T("\\UserChoice")).c_str(), false))
             {
                 //test if extension is known
-                AnsiString Player=Reg_User->ReadString("Progid");
+                AnsiString Player;
+                try {Player=Reg_User->ReadString("Progid");} catch (...){}
                 Reg_User->CloseKey();
 
                 //Test if MediaInfo shell extension is known
@@ -719,10 +791,10 @@ int Preferences::ExplorerShell()
                 }
             }
         }
-        ExplorerShell_Edit("SystemFileAssociations\\audio", 0, IsChanged, Reg);
-        ExplorerShell_Edit("SystemFileAssociations\\Directory.Audio", 0, IsChanged, Reg);
-        ExplorerShell_Edit("SystemFileAssociations\\Directory.Video", 0, IsChanged, Reg);
-        ExplorerShell_Edit("SystemFileAssociations\\video", 0, IsChanged, Reg);
+        ExplorerShell_Edit("SystemFileAssociations\\audio", 0, IsChanged);
+        ExplorerShell_Edit("SystemFileAssociations\\Directory.Audio", 0, IsChanged);
+        ExplorerShell_Edit("SystemFileAssociations\\Directory.Video", 0, IsChanged);
+        ExplorerShell_Edit("SystemFileAssociations\\video", 0, IsChanged);
 
         //Adding/removing to SystemFileAssociations
         int32s ShellExtension=Config.Read(__T("ShellExtension")).To_int32s();
@@ -730,9 +802,9 @@ int Preferences::ExplorerShell()
         {
             //Remove shell ext except "Folder"
             if (List(I1, 0)!=__T("Folder"))
-                ExplorerShell_Edit((__T("Software\\Classes\\SystemFileAssociations\\")+List(I1, 0)).c_str(), ShellExtension, IsChanged, Reg_User);
+                ExplorerShell_Edit((__T("Software\\Classes\\SystemFileAssociations\\")+List(I1, 0)).c_str(), ShellExtension, IsChanged);
         }
-        ExplorerShell_Edit("Software\\Classes\\Directory", Config.Read(__T("ShellExtension_Folder")).To_int32s(), IsChanged, Reg_User);
+        ExplorerShell_Edit("Software\\Classes\\Directory", Config.Read(__T("ShellExtension_Folder")).To_int32s(), IsChanged);
     }
     else
     {
@@ -742,11 +814,12 @@ int Preferences::ExplorerShell()
             if (List(I1, 0)==__T("Folder"))
                 ShellExtension=Config.Read(__T("ShellExtension_Folder")).To_int32s();
 
-            //Open (or create) a extension. Create only if Sheel extension is wanted
+            //Open (or create) a extension. Create only if Shell extension is wanted
             if (Reg->OpenKey(List(I1, 0).c_str(), ShellExtension))
             {
                 //test if extension is known
-                AnsiString Player=Reg->ReadString(__T(""));
+                AnsiString Player;
+                try {Player=Reg->ReadString("");} catch (...){}
                 if (Player=="")
                 {
                     //extension not known, will use our default
@@ -779,7 +852,8 @@ int Preferences::ExplorerShell()
                     {
                         //test if good writing
                         AnsiString ShellExtensionToWtrite="\"" + Application->ExeName +"\" \"%1\"";
-                        AnsiString ShellExtension=Reg->ReadString(__T("")).c_str();
+                        AnsiString ShellExtension;
+                        try {ShellExtension=Reg->ReadString("");} catch (...){}
                         if (ShellExtension!=ShellExtensionToWtrite)
                         {
                             //This is not the good shell extension, writing new one
@@ -817,7 +891,8 @@ int Preferences::ExplorerShell()
             if (Reg_User->OpenKey((Ztring(__T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\"))+List(I1, 0)+__T("\\UserChoice")).c_str(), false))
             {
                 //test if extension is known
-                AnsiString Player=Reg_User->ReadString("Progid");
+                AnsiString Player;
+                try {Player=Reg_User->ReadString("Progid");} catch (...){}
                 Reg_User->CloseKey();
 
                 //Test if MediaInfo shell extension is known
@@ -830,7 +905,8 @@ int Preferences::ExplorerShell()
                         {
                             //test if good writing
                             AnsiString ShellExtensionToWtrite="\"" + Application->ExeName +"\" \"%1\"";
-                            AnsiString ShellExtension=Reg->ReadString(__T("")).c_str();
+                            AnsiString ShellExtension;
+                            try {ShellExtension=Reg->ReadString("");} catch (...){}
                             if (ShellExtension!=ShellExtensionToWtrite)
                             {
                                 //This is not the good shell extension, writing new one
@@ -905,7 +981,7 @@ void Dynamic_Free()
 }
 
 //---------------------------------------------------------------------------
-int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsChanged, TRegistry* Reg)
+int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsChanged)
 {
     ::HKEY Key;
     LONG WINAPI Result;
@@ -943,9 +1019,9 @@ int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsCh
                     RegCloseKey(Key);
                     return 0;
                 }
-                RegCloseKey(Key);
                 IsChanged=true;
             }
+            RegCloseKey(Key);
         }
         else// if (Player!=__T("Folder"))
         {
@@ -966,10 +1042,8 @@ int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsCh
                 return 0;
             }
             Result=RegDeleteKey(HKEY_CURRENT_USER, Ztring().From_Local((Player+"\\Shell").c_str()).c_str()); //Clear it if empty
-
             IsChanged=true;
         }
-        Reg->CloseKey();
     }
     else
     {
@@ -1025,9 +1099,9 @@ int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsCh
                     RegCloseKey(Key);
                     return 0;
                 }
-                RegCloseKey(Key);
                 IsChanged=true;
             }
+            RegCloseKey(Key);
         }
         else// if (Player!=__T("Folder"))
         {
@@ -1044,7 +1118,6 @@ int ExplorerShell_Edit(const AnsiString &Player, bool ShellExtension, bool &IsCh
 
             IsChanged=true;
         }
-        Reg->CloseKey();
     }
     else
     {
@@ -1368,6 +1441,27 @@ int Preferences::ShellToolTip()
 //---------------------------------------------------------------------------
 ZenLib::Ztring &Preferences::Translate(ZenLib::Ztring Name)
 {
+    if (Name==__T("SponsorMessage") || Name==__T("SponsorUrl"))
+    {
+        Ztring Language=Translate(__T("  Language_ISO639"));
+        if (Name==__T("SponsorMessage"))
+        {
+            int Index=SponsorMessage.Find(Language, 0);
+            if (Index==-1 || SponsorMessage(Index)(1)==__T(""))
+                Index=SponsorMessage.Find(__T("en"), 0);
+
+            return SponsorMessage(Index)(1);
+        }
+        else if (Name==__T("SponsorUrl"))
+        {
+            int Index=SponsorUrl.Find(Language, 0);
+            if (Index==-1 || SponsorUrl(Index)(1)==__T(""))
+                Index=SponsorUrl.Find(__T("en"), 0);
+
+            return SponsorUrl(Index)(1);
+        }
+    }
+
     size_t Pos=Details[Prefs_Language].Find(Name, 0, 0, __T("=="), Ztring_CaseSensitive);
 
     //If not in the language, search for English language
@@ -1376,5 +1470,3 @@ ZenLib::Ztring &Preferences::Translate(ZenLib::Ztring Name)
     else
         return Details[Prefs_Language](Pos)(1);
 }
-
-

@@ -3,25 +3,38 @@
 //  MediaInfo
 //
 //  Created by Max Pozdeev on 07.02.12.
-//  Copyright 2012-2019 Jerome Martinez. All rights reserved.
+//  Copyright 2012-2020 Jerome Martinez. All rights reserved.
 //
 
 #import "MyWindowController.h"
 #import "oMediaInfoList.h"
 #import "MediaInfoExporter.h"
-
+#import "SubscriptionManager.h"
+#import "SubscribeWindowController.h"
+#import "ProgressDialog.h"
 #define kEasyTabIndex 0
 #define kTreeTabIndex 1
 #define kTextTabIndex 2
-#define kOtherViewsSelectorIndex 3
+#define kCompareTabIndex 3
+#define kHTMLTabIndex 4
+
+#define kApplicationMenuTag 10
+#define kSubscribeMenuItemTag 11
+#define kViewMenuTag 50
+#define kCompareMenuItemTag 51
+#define kAdvancedMenuItemTag 52
+#define kAdvancedMenuItemSeparatorTag 53
 
 NSString* TextKindToNSString(ViewMenu_Kind kind)
 {
 	NSString *_ret = nil;
 	switch (kind)
 	{
+		case Kind_HTML:			_ret = @"HTML"; break;
 		case Kind_XML:			_ret = @"XML"; break;
+		case Kind_CSV:			_ret = @"CSV"; break;
 		case Kind_JSON:			_ret = @"JSON"; break;
+		case Kind_Graph_Svg:		_ret = @"Graph_Svg"; break;
 		case Kind_MPEG7:		_ret = @"MPEG-7"; break;
 		case Kind_PBCore:		_ret = @"PBCore"; break;
 		case Kind_PBCore2:		_ret = @"PBCore2"; break;
@@ -47,6 +60,10 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 -(void)dealloc {
 	[mediaList release];
+    for(id observer in observers) {
+        [[NSNotificationCenter defaultCenter] removeObserver:observer];
+    }
+    [observers release];
 	[super dealloc];
 }
 
@@ -55,19 +72,98 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 	[easyTable setBackgroundColor:[NSColor clearColor]];
 	[easyGeneralLinkButton setHidden:YES];
 	_lastTextKind = Kind_Text;
-	[tabSelector setMenu:otherViewsMenu forSegment:kOtherViewsSelectorIndex];
+	[tabSelector setMenu:otherViewsMenu forSegment:tabSelector.segmentCount - 1];
 	_exportSavePanel = nil;
+    fileSelectorIsHidden = NO;
+    subscriptionEnabled = NO;
+
+    observers = [[NSMutableArray alloc] init];
+
+    if (@available(macOS 10.9, *)) {
+        [subscribeButton setEnabled:YES forSegment:0];
+        if([[SubscriptionManager shared] subscriptionActive]) {
+            [self enableSubscription];
+
+             NSString* defaultView = [[NSUserDefaults standardUserDefaults] stringForKey:@"defaultView"];
+
+            if (defaultView == nil || [defaultView isEqualToString:@"Easy"])
+                [self selectEasyTab:nil];
+            else if ([defaultView isEqualToString:@"Tree"])
+                [self selectTreeTab:nil];
+            else if ([defaultView isEqualToString:@"Compare"])
+                [self selectCompareTab:nil];
+            else if ([defaultView isEqualToString:@"Text"])
+                [self selectTextTab:nil];
+            else if ([defaultView isEqualToString:@"HTML"])
+                [self selectViewHTML:nil];
+            else if ([defaultView isEqualToString:@"XML"])
+                [self selectViewXML:nil];
+            else if ([defaultView isEqualToString:@"JSON"])
+                [self selectViewJSON:nil];
+            else if ([defaultView isEqualToString:@"Graph_Svg"])
+                [self selectViewGraph_Svg:nil];
+            else if ([defaultView isEqualToString:@"MPEG-7"])
+                [self selectViewMPEG7:nil];
+            else if ([defaultView isEqualToString:@"PBCore"])
+                [self selectViewPBCore:nil];
+            else if ([defaultView isEqualToString:@"PBCore2"])
+                [self selectViewPBCore2:nil];
+            else if ([defaultView isEqualToString:@"EBUCore_1.5"])
+                [self selectViewEBUCore15:nil];
+             else if ([defaultView isEqualToString:@"EBUCore_1.6"])
+                [self selectViewEBUCore16:nil];
+            else if ([defaultView isEqualToString:@"EBUCore_1.8_ps"])
+                [self selectViewEBUCore18_ps:nil];
+            else if ([defaultView isEqualToString:@"EBUCore_1.8_sp"])
+                [self selectViewEBUCore18_sp:nil];
+            else if ([defaultView isEqualToString:@"EBUCore_1.8_ps_JSON"])
+                [self selectViewEBUCore18_ps_json:nil];
+            else if ([defaultView isEqualToString:@"EBUCore_1.8_sp_JSON"])
+                [self selectViewEBUCore18_sp_json:nil];
+            else if ([defaultView isEqualToString:@"FIMS_1.1"])
+                [self selectViewFIMS11:nil];
+            else if ([defaultView isEqualToString:@"FIMS_1.2"])
+                [self selectViewFIMS12:nil];
+            else if ([defaultView isEqualToString:@"FIMS_1.3"])
+                [self selectViewFIMS13:nil];
+            else if ([defaultView isEqualToString:@"reVTMD"])
+                [self selectViewReVTMD:nil];
+            else if ([defaultView isEqualToString:@"NISO_Z39.87"])
+                [self selectViewNISO_Z39_87:nil];
+            }
+        else {
+            [observers addObject:[[NSNotificationCenter defaultCenter] addObserverForName:[SubscriptionManager subscriptionStateChangedNotification] object:[SubscriptionManager shared] queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification) {
+                [self enableSubscription];
+                [self selectCompareTab:nil];
+            }]];
+        }
+
+        NSMenu *menu = [NSApp mainMenu];
+        if(menu) {
+            NSMenuItem *main = [menu itemWithTag:kApplicationMenuTag];
+            if(main && main.submenu) {
+                NSMenuItem *item = [main.submenu itemWithTag:kSubscribeMenuItemTag];
+                if(item) {
+                    [item setHidden:NO];
+                }
+            }
+        }
+    }
+    else {
+        [tabSelector setEnabled:NO forSegment:kCompareTabIndex];
+    }
 }
 
 #pragma mark -
 #pragma mark GUI routines
 
 - (IBAction)openFile:(id)sender {
-	
 	NSOpenPanel *openPanel	= [NSOpenPanel openPanel];
 	[openPanel setCanChooseDirectories:YES];
 	[openPanel setAllowsMultipleSelection:YES];
-	
+    if (@available(macOS 10.10, *)) {
+	    [openPanel setCanDownloadUbiquitousContents:NO];
+    }
 	[openPanel beginSheetModalForWindow:[self window] completionHandler:^(NSInteger result){
 		if(result == NSFileHandlingPanelOKButton) {
 			[self processFiles:[openPanel URLs]];
@@ -77,34 +173,73 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 
 -(IBAction)clickOnViewSelector:(id)sender {
-	int segment = [(NSSegmentedControl*)sender selectedSegment];
-	if(segment == 3) {
-		//[NSMenu popUpContextMenu:otherViewsMenu withEvent:[NSApp currentEvent] forView:tabSelector];
+    NSSegmentedControl *control = (NSSegmentedControl *)sender;
+
+    int index = [control selectedSegment];
+    if(index == control.segmentCount - 1) {
+    }
+	else if(index == kCompareTabIndex) {
+		[self selectCompareTab:nil];
 	}
-	else if(segment == 2) {
+	else if(index == kTextTabIndex) {
 		[self selectTextTab:nil];
 	}
-	else if(segment == 1) {
+	else if(index == kTreeTabIndex) {
 		[self selectTreeTab:nil];
 	}
-	else {
+	else if(index == kEasyTabIndex) {
 		[self selectEasyTab:nil];
 	}
 }
 
+-(void)showFileSelector {
+    if(fileSelectorIsHidden) {
+        [comboBox setHidden:NO];
+        [hline setHidden:NO];
+
+        NSRect frame = [tabs frame];
+        frame.size.height-=42;
+        [tabs setFrame:frame];
+
+        fileSelectorIsHidden = NO;
+    }
+}
+
+-(void)hideFileSelector {
+    if(!fileSelectorIsHidden) {
+        [comboBox setHidden:YES];
+        [hline setHidden:YES];
+
+        NSRect frame = [tabs frame];
+        frame.size.height+=42;
+        [tabs setFrame:frame];
+
+        fileSelectorIsHidden = YES;
+    }
+}
+
+-(IBAction)selectCompareTab:(id)sender {
+    if (@available(macOS 10.9, *)) {
+        [self hideFileSelector];
+        [tabSelector setSelectedSegment:kCompareTabIndex];
+        [tabs selectTabViewItemAtIndex:kCompareTabIndex];
+    }
+}
 
 -(IBAction)selectEasyTab:(id)sender {
+    [self showFileSelector];
 	[tabSelector setSelectedSegment:kEasyTabIndex];
 	[tabs selectTabViewItemAtIndex:kEasyTabIndex];
 }
 
 -(IBAction)selectTreeTab:(id)sender {
+    [self showFileSelector];
 	[tabSelector setSelectedSegment:kTreeTabIndex];
 	[tabs selectTabViewItemAtIndex:kTreeTabIndex];
 }
 
 -(IBAction)selectTextTab:(id)sender {
-	
+    [self showFileSelector];
 	if (_lastTextKind != Kind_Text)
 	{
 		_lastTextKind = Kind_Text;
@@ -116,10 +251,36 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 -(void)_selectViewOFKind:(ViewMenu_Kind)_kind
 {
+    [self showFileSelector];
 	_lastTextKind = _kind;
-	[tabSelector setSelectedSegment:kOtherViewsSelectorIndex];
-	[self updateTextTabWithFileAtIndex:selectedFileIndex];
-	[tabs selectTabViewItemAtIndex:kTextTabIndex];
+	[tabSelector setSelectedSegment:tabSelector.segmentCount - 1];
+    if (_kind==Kind_HTML || _kind==Kind_Graph_Svg)
+    {
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:@"graphAdmShowTrackUIDs"]!=nil)
+        {
+            BOOL value = [[NSUserDefaults standardUserDefaults] boolForKey:@"graphAdmShowTrackUIDs"];
+            [oMediaInfoList setOptionStatic:@"Graph_Adm_ShowTrackUIDs" withValue:(value?@"1":@"0")];
+        }
+
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:@"graphAdmShowChannelFormat"]!=nil)
+        {
+            BOOL value = [[NSUserDefaults standardUserDefaults] boolForKey:@"graphAdmShowChannelFormats"];
+            [oMediaInfoList setOptionStatic:@"Graph_Adm_ShowChannelFormats" withValue:(value?@"1":@"0")];
+        }
+
+        [self updateHTMLTabWithFileAtIndex:selectedFileIndex];
+        [tabs selectTabViewItemAtIndex:kHTMLTabIndex];
+    }
+    else
+    {
+        [self updateTextTabWithFileAtIndex:selectedFileIndex];
+        [tabs selectTabViewItemAtIndex:kTextTabIndex];
+    }
+}
+
+-(IBAction)selectViewHTML:(id)sender
+{
+    [self _selectViewOFKind:Kind_HTML];
 }
 
 -(IBAction)selectViewXML:(id)sender
@@ -202,6 +363,11 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 	[self _selectViewOFKind:Kind_NISO_Z39_87];
 }
 
+-(IBAction)selectViewGraph_Svg:(id)sender
+{
+	[self _selectViewOFKind:Kind_Graph_Svg];
+}
+
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
 	
@@ -242,9 +408,15 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 	NSInteger tag = exportFormatButton.selectedTag;
 
-	if (tag == 8 || tag == 9)
+	if (tag == 4 || tag == 13 || tag == 14)
 		[_exportSavePanel setAllowedFileTypes:@[@"json"]];
-	else if (tag > 0)
+	else if (tag == 5)
+		[_exportSavePanel setAllowedFileTypes:@[@"svg"]];
+	else if (tag == 3)
+		[_exportSavePanel setAllowedFileTypes:@[@"csv"]];
+	else if (tag == 1)
+		[_exportSavePanel setAllowedFileTypes:@[@"html"]];
+	else if (tag > 1)
 		[_exportSavePanel setAllowedFileTypes:@[@"xml"]];
 	else
 		[_exportSavePanel setAllowedFileTypes:@[@"txt"]];
@@ -276,51 +448,60 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 			switch (exportFormatButton.selectedTag)
 			{
 				case 1:
-					format = TextKindToNSString(Kind_XML);
+					format = TextKindToNSString(Kind_HTML);
 					break;
 				case 2:
-					format = TextKindToNSString(Kind_JSON);
+					format = TextKindToNSString(Kind_XML);
 					break;
 				case 3:
-					format = TextKindToNSString(Kind_MPEG7);
+					format = TextKindToNSString(Kind_CSV);
 					break;
 				case 4:
-					format = TextKindToNSString(Kind_PBCore);
+					format = TextKindToNSString(Kind_JSON);
 					break;
 				case 5:
-					format = TextKindToNSString(Kind_PBCore2);
+					format = TextKindToNSString(Kind_Graph_Svg);
 					break;
 				case 6:
-					format = TextKindToNSString(Kind_EBUCore_1_5);
+					format = TextKindToNSString(Kind_MPEG7);
 					break;
 				case 7:
-					format = TextKindToNSString(Kind_EBUCore_1_6);
+					format = TextKindToNSString(Kind_PBCore);
 					break;
 				case 8:
-					format = TextKindToNSString(Kind_EBUCore_1_8_ps);
+					format = TextKindToNSString(Kind_PBCore2);
 					break;
 				case 9:
-					format = TextKindToNSString(Kind_EBUCore_1_8_sp);
+					format = TextKindToNSString(Kind_EBUCore_1_5);
 					break;
 				case 10:
-					format = TextKindToNSString(Kind_EBUCore_1_8_ps_json);
+					format = TextKindToNSString(Kind_EBUCore_1_6);
 					break;
 				case 11:
-					format = TextKindToNSString(Kind_EBUCore_1_8_sp_json);
+					format = TextKindToNSString(Kind_EBUCore_1_8_ps);
 					break;
 				case 12:
-					format = TextKindToNSString(Kind_FIMS_1_1);
+					format = TextKindToNSString(Kind_EBUCore_1_8_sp);
 					break;
 				case 13:
-					format = TextKindToNSString(Kind_FIMS_1_2);
+					format = TextKindToNSString(Kind_EBUCore_1_8_ps_json);
 					break;
 				case 14:
-					format = TextKindToNSString(Kind_FIMS_1_3);
+					format = TextKindToNSString(Kind_EBUCore_1_8_sp_json);
 					break;
 				case 15:
-					format = TextKindToNSString(Kind_reVTMD);
+					format = TextKindToNSString(Kind_FIMS_1_1);
 					break;
 				case 16:
+					format = TextKindToNSString(Kind_FIMS_1_2);
+					break;
+				case 17:
+					format = TextKindToNSString(Kind_FIMS_1_3);
+					break;
+				case 18:
+					format = TextKindToNSString(Kind_reVTMD);
+					break;
+				case 19:
 					format = TextKindToNSString(Kind_NISO_Z39_87);
 					break;
 				case 0:
@@ -349,6 +530,82 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 	
 }
 
+-(void)enableSubscription {
+    if(subscriptionEnabled)
+        return;
+
+    NSMenu *menu = [NSApp mainMenu];
+    if(menu) {
+        NSMenuItem *main = [menu itemWithTag:kApplicationMenuTag];
+        if(main && main.submenu) {
+            NSMenuItem *item = [main.submenu itemWithTag:kSubscribeMenuItemTag];
+            if(item) {
+                [item setTitle:NSLocalizedString(@"Manage Subscription", @"Manage Subscription")];
+            }
+        }
+
+        NSMenuItem *view = [menu itemWithTag:kViewMenuTag];
+        if(view && view.submenu) {
+            NSMenuItem *compare = [view.submenu itemWithTag:kCompareMenuItemTag];
+            [compare setHidden:NO];
+
+            NSMenuItem *advanced = [view.submenu itemWithTag:kAdvancedMenuItemTag];
+            [advanced setHidden:NO];
+
+            NSMenuItem *separator = [view.submenu itemWithTag:kAdvancedMenuItemSeparatorTag];
+            [separator setHidden:NO];
+        }
+    }
+
+    if (@available(macOS 10.13, *)) {
+        [tabSelector setToolTip:NSLocalizedString(@"Compare View", @"Compare View") forSegment:kCompareTabIndex];
+        [subscribeButton setToolTip:NSLocalizedString(@"Manage subscription", @"Manage Subscription") forSegment:0];
+    }
+
+    NSInteger index = [[mainToolbar items] indexOfObject:subscribeButtonItem];
+    if (index != NSNotFound)
+        [mainToolbar removeItemAtIndex:index];
+
+    [tabSelector setEnabled:YES forSegment:kCompareTabIndex];
+
+    /* NSUInteger lastSegment = tabSelector.segmentCount - 1;
+    NSString *segmentLabel = [tabSelector labelForSegment:lastSegment];
+    NSImage *segmentImage = [tabSelector imageForSegment:lastSegment];
+    NSMenu *segmentMenu = [tabSelector menuForSegment:lastSegment];
+    CGFloat segmentWidth = [tabSelector widthForSegment:lastSegment];
+    NSImageScaling segmentScaling = [tabSelector imageScalingForSegment:lastSegment];
+    NSTextAlignment segmentAlignment = NSTextAlignmentCenter;
+    NSString *segmentTooltip = nil;
+    if (@available(macOS 10.13, *)) {
+        segmentAlignment = [tabSelector alignmentForSegment:lastSegment];
+        segmentTooltip = [tabSelector toolTipForSegment:lastSegment];
+    }
+
+    [tabSelector setLabel:@"⇆" forSegment:lastSegment];
+    [tabSelector setImage:nil forSegment:lastSegment];
+    [tabSelector setMenu:nil forSegment:lastSegment];
+    [tabSelector setWidth:28 forSegment:lastSegment];
+    [tabSelector setImageScaling:NSImageScaleProportionallyDown forSegment:lastSegment];
+    if (@available(macOS 10.13, *)) {
+        [tabSelector setAlignment:NSTextAlignmentCenter forSegment:lastSegment];
+        [tabSelector setToolTip:@"Compare View" forSegment:lastSegment];
+    }
+
+    [tabSelector setSegmentCount:tabSelector.segmentCount + 1];
+    lastSegment++;
+
+    [tabSelector setLabel:segmentLabel forSegment:lastSegment];
+    [tabSelector setImage:segmentImage forSegment:lastSegment];
+    [tabSelector setMenu:segmentMenu forSegment:lastSegment];
+    [tabSelector setWidth:segmentWidth forSegment:lastSegment];
+    [tabSelector setImageScaling:segmentScaling forSegment:lastSegment];
+    if(@available(macOS 10.13, *)) {
+        [tabSelector setAlignment:segmentAlignment forSegment:lastSegment];
+        [tabSelector setToolTip:segmentTooltip forSegment:lastSegment];
+    } */
+
+    subscriptionEnabled = YES;
+}
 
 #pragma mark -
 #pragma mark Processing
@@ -356,23 +613,38 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 -(void)processFiles:(NSArray *)URLs {
 	
 	//Process files...
-    if(!mediaList)
-	    mediaList = [[oMediaInfoList alloc] init]; //dont care about release
+	if(!mediaList)
+		mediaList = [[oMediaInfoList alloc] init]; //dont care about release
 
-    NSInteger oldIndex = [mediaList count]-1;
+	NSInteger oldCount = [mediaList count];
 
-	if([mediaList openFiles:URLs]) {
-		
+	if([URLs count]==1 && [[NSFileManager defaultManager] fileExistsAtPath:[URLs[0] path]]) {
+		if(![mediaList openFiles:URLs]) {
+			//Report about some error while opening?
+			[[NSAlert alertWithMessageText:NSLocalizedString(@"Error", @"Error header")
+				defaultButton:nil
+				alternateButton:nil
+				otherButton:nil
+				informativeTextWithFormat:NSLocalizedString(@"Can not open file(s)", @"Error text while open")] runModal];
+		}
+	}
+	else {
+		ProgressDialog *wc = [[ProgressDialog alloc] initWithWindowNibName:@"ProgressDialog"];
+		[wc setItems:URLs];
+		[wc setMediaList:mediaList];
+
+		[NSApp runModalForWindow:wc.window];
+		[wc.window close];
+		wc = nil;
+	}
+
+	if([mediaList count]>oldCount) {
 		//Update GUI
-		
 		NSArray *files = [mediaList files];
-		
 		NSUInteger max = [files count];
-		
 		NSMutableArray *array = [NSMutableArray array];
-		
+
 		for(NSUInteger i=0; i<max; i++) {
-			
 			NSDictionary *listElement = [NSDictionary dictionaryWithObjectsAndKeys:
 										 [files objectAtIndex:i], @"value",
 										 [files objectAtIndex:i], @"title",
@@ -380,41 +652,33 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 			
 			[array addObject:listElement];
 		}
-		
+
 		[comboController setContent:array];
-               [treeView setFiles:mediaList];
+		[compareView setFiles:mediaList];
+		[treeView setFiles:mediaList];
 
 		//display first added file
-               [self setSelectedFileIndex:oldIndex+1];
-               [comboController setSelectionIndex:oldIndex+1];
+		[self setSelectedFileIndex:oldCount];
+		[comboController setSelectionIndex:oldCount];
 	}
-	else {
-		//Report about some error while opening?
-		
-		[[NSAlert alertWithMessageText:NSLocalizedString(@"Error", @"Error header")
-						 defaultButton:nil 
-					   alternateButton:nil 
-						   otherButton:nil 
-			 informativeTextWithFormat:NSLocalizedString(@"Can not open file(s)", @"Error text while open")] runModal];
-	}
-	
-	
 }
 
 
 -(void)showFileAtIndex:(NSUInteger)index {
-	
 	// Easy view
-	
 	[self updateEasyTabWithFileAtIndex:index];
-	
-	
-	//Text View
 
+	//Text View
 	[self updateTextTabWithFileAtIndex:index];
 
+    //HTML View
+    [self updateHTMLTabWithFileAtIndex:index];
+
 	//tree view
-       [treeView setIndex:selectedFileIndex];
+	[treeView setIndex:index];
+
+	// compare view
+	[compareView reload];
 
 	//recent items
 	NSString *filename = [mediaList filenameAtIndex:index];
@@ -499,6 +763,28 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 }
 
+-(void)updateHTMLTabWithFileAtIndex:(NSUInteger)index
+{
+    if (_lastTextKind!=Kind_HTML && _lastTextKind!=Kind_Graph_Svg)
+        return;
+
+    NSString *_inform = TextKindToNSString(_lastTextKind);
+    [mediaList setOption:@"Inform" withValue:_inform];
+
+    NSString *html=[mediaList informAtIndex:index];
+    if (_lastTextKind==Kind_Graph_Svg)
+    {
+        NSRange range = [html rangeOfString:@"<svg"];
+        if (range.length)
+            html=[html substringFromIndex:range.location];
+        
+        NSString *path = [[NSBundle mainBundle] pathForResource:@"/Plugin/Graph/Template" ofType:@"html"];
+        NSString *template = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+        html=[template stringByReplacingOccurrencesOfString:@"@SVG@" withString:html];
+    }
+    [htmlField setContent:html];
+    [mediaList setOption:@"Inform" withValue:@""];
+}
 
 -(void)updateTextTabWithFileAtIndex:(NSUInteger)index
 {
@@ -667,21 +953,32 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 	SEL action = [menuItem action];
 
     if(action == @selector(selectEasyTab:)) {
-        [menuItem setState: ([tabSelector selectedSegment] == kEasyTabIndex ? NSOnState : NSOffState)];
+        [menuItem setState: ([tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kEasyTabIndex ? NSOnState : NSOffState)];
     }
     else if(action == @selector(selectTreeTab:)) {
-		[menuItem setState: ([tabSelector selectedSegment] == kTreeTabIndex ? NSOnState : NSOffState)];
+		[menuItem setState: ([tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kTreeTabIndex ? NSOnState : NSOffState)];
 	}
 	else if(action == @selector(selectTextTab:)) {
 		BOOL state = [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kTextTabIndex && _lastTextKind == Kind_Text ? YES : NO;
 		[menuItem setState: (state ? NSOnState : NSOffState)];
 	}
+    else if(action == @selector(selectCompareTab:)) {
+		[menuItem setState: ([tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kCompareTabIndex ? NSOnState : NSOffState)];
+	}
+    else if(action == @selector(selectViewHTML:)) {
+        BOOL state = [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kHTMLTabIndex && _lastTextKind == Kind_HTML ? YES : NO;
+        [menuItem setState: (state ? NSOnState : NSOffState)];
+    }
 	else if(action == @selector(selectViewXML:)) {
 		BOOL state = [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kTextTabIndex && _lastTextKind == Kind_XML ? YES : NO;
 		[menuItem setState: (state ? NSOnState : NSOffState)];
 	}
 	else if(action == @selector(selectViewJSON:)) {
 		BOOL state = [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kTextTabIndex && _lastTextKind == Kind_JSON ? YES : NO;
+		[menuItem setState: (state ? NSOnState : NSOffState)];
+	}
+	else if(action == @selector(selectViewGraph_Svg:)) {
+		BOOL state = [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kTextTabIndex && _lastTextKind == Kind_Graph_Svg ? YES : NO;
 		[menuItem setState: (state ? NSOnState : NSOffState)];
 	}
 	else if(action == @selector(selectViewMPEG7:)) {
@@ -744,28 +1041,54 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 		return (mediaList != nil); //be careful if it's in background processing
 	}
     else if(action == @selector(selectNextTab:)) {
-        return mediaList && [mediaList count] && selectedFileIndex < [mediaList count] - 1;
+        return mediaList && [tabs indexOfTabViewItem:tabs.selectedTabViewItem] != kCompareTabIndex && [mediaList count] && selectedFileIndex < [mediaList count] - 1;
     }
     else if(action == @selector(selectPreviousTab:)) {
-        return mediaList && [mediaList count] && selectedFileIndex > 0;
+        return mediaList && [tabs indexOfTabViewItem:tabs.selectedTabViewItem] != kCompareTabIndex && [mediaList count] && selectedFileIndex > 0;
     }
     else if(action == @selector(closeFile:) || action == @selector(closeAllFiles:)) {
-        return mediaList && [mediaList count];
+        if(action == @selector(closeFile:) && [tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kCompareTabIndex)
+            return mediaList && compareView.selectedIndex > 0 && compareView.selectedIndex - 1 < [mediaList count];
 
+        return mediaList && [mediaList count];
     }
 
 	return YES;
 }
 
+-(void)closeFileAtIndex:(NSUInteger)index {
+    if(mediaList && index < [mediaList count]) {
+        NSUInteger oldSelectedFileIndex = selectedFileIndex;
+        NSUInteger oldComboControllerIndex = [comboController selectionIndex];
+
+        NSUInteger newSelectedFileIndex = oldSelectedFileIndex;
+        NSUInteger newComboControllerIndex = oldComboControllerIndex;
+
+        if((selectedFileIndex > 0) && ((index < selectedFileIndex) || (index == selectedFileIndex && index == [mediaList count] - 1))) {
+            newSelectedFileIndex = oldSelectedFileIndex - 1;
+            newComboControllerIndex = oldComboControllerIndex - 1;
+        }
+
+        NSMutableArray* array = [comboController content];
+        [array removeObjectAtIndex:index];
+        [comboController setContent:array];
+
+        [mediaList closeAtIndex:index];
+
+        [comboController setSelectionIndex:newComboControllerIndex];
+        [self setSelectedFileIndex:newSelectedFileIndex];
+    }
+}
+
 -(IBAction)selectNextTab:(id)sender {
-    if(mediaList && [mediaList count] && selectedFileIndex < [mediaList count] - 1) {
+    if(mediaList && [tabs indexOfTabViewItem:tabs.selectedTabViewItem] != kCompareTabIndex && [mediaList count] && selectedFileIndex < [mediaList count] - 1) {
         [comboController selectNext:nil];
         [self setSelectedFileIndex:selectedFileIndex + 1];
     }
 }
 
 -(IBAction)selectPreviousTab:(id)sender {
-    if(mediaList && [mediaList count] && selectedFileIndex > 0) {
+    if(mediaList && [tabs indexOfTabViewItem:tabs.selectedTabViewItem] != kCompareTabIndex && [mediaList count] && selectedFileIndex > 0) {
         [comboController selectPrevious:nil];
         [self setSelectedFileIndex:selectedFileIndex - 1];
     }
@@ -773,6 +1096,14 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
 
 -(IBAction)closeFile:(id)sender {
     if(mediaList && [mediaList count]) {
+
+        if ([tabs indexOfTabViewItem:tabs.selectedTabViewItem] == kCompareTabIndex) {
+            if(compareView.selectedIndex >= 0 && (compareView.selectedIndex) < [mediaList count])
+                [self closeFileAtIndex:(compareView.selectedIndex)];
+
+            return;
+        }
+
         NSUInteger oldSelectedFileIndex = selectedFileIndex;
         NSUInteger oldComboControllerIndex = [comboController selectionIndex];
         NSUInteger newSelectedFileIndex = oldSelectedFileIndex;
@@ -801,6 +1132,25 @@ NSString* TextKindToNSString(ViewMenu_Kind kind)
         }
         [comboController setContent:nil];
         [self setSelectedFileIndex:0];
+    }
+}
+
+- (IBAction)clickOnSubscribe:(id)sender {
+    [[SubscribeWindowController controller] show];
+}
+
+-(IBAction)advancedMode:(id)sender {
+    if([sender isKindOfClass: [NSMenuItem class]]) {
+        NSMenuItem* item = sender;
+
+        BOOL newState = !item.state;
+        [item setState:newState];
+
+        [oMediaInfoList setOptionStatic:@"Complete" withValue:(newState?@"1":@"")];
+
+        if(mediaList && selectedFileIndex < [mediaList count]) {
+            [self showFileAtIndex:selectedFileIndex];
+        }
     }
 }
 @end

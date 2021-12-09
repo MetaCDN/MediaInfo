@@ -22,9 +22,9 @@ interface ReportDao {
     fun getLastId(): Single<Int>
 
     @Query("SELECT * FROM reports WHERE id = :id")
-    fun getReport(id: Int): Flowable<Report>
+    fun getReport(id: Int): Single<Report>
 
-    @Query("SELECT * FROM reports")
+    @Query("SELECT * FROM reports ORDER BY id")
     fun getAllReports(): Flowable<List<Report>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -33,7 +33,7 @@ interface ReportDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun updateReport(report: Report)
 
-    @Delete()
+    @Delete
     fun deleteReport(report: Report)
 
     @Query("DELETE FROM reports WHERE id = :id")

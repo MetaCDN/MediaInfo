@@ -12,7 +12,7 @@ import java.io.File
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
 import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatDelegate
@@ -33,10 +33,9 @@ import android.content.Context
 import android.widget.Toast
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.drawable.ColorDrawable
+import android.content.res.Resources
 import android.view.*
-
-import com.google.android.material.snackbar.Snackbar
+import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -50,6 +49,9 @@ import kotlinx.android.synthetic.main.hello_layout.*
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
+import com.yariksoffice.lingver.Lingver
+import java.io.BufferedReader
+import java.util.*
 
 /**
  * An activity representing a list of Pings. This activity
@@ -124,7 +126,7 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
                         }
                     }
                     "file" -> {
-                        val file = File(uri.path)
+                        val file = File(uri.path.orEmpty())
                         try {
                             fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
                         } catch (e: Exception) {}
@@ -149,24 +151,7 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
                                         .subscribeOn(Schedulers.io())
                                         .observeOn(AndroidSchedulers.mainThread())
                                         .doOnSuccess {
-                                            val id: Int = it
-                                            if (twoPane) {
-                                                val fragment: ReportDetailFragment = ReportDetailFragment().apply {
-                                                    arguments = Bundle().apply {
-                                                        putInt(ReportDetailFragment.ARG_REPORT_ID, id)
-                                                    }
-                                                }
-
-                                                supportFragmentManager
-                                                        .beginTransaction()
-                                                        .replace(R.id.report_detail_container, fragment)
-                                                        .commit()
-                                            } else {
-                                                val intent = Intent(this@ReportListActivity, ReportDetailActivity::class.java)
-                                                intent.putExtra(ReportDetailFragment.ARG_REPORT_ID, id)
-
-                                                startActivity(intent)
-                                            }
+                                            showReport(it)
                                         }.subscribe())
                             }
                         }.subscribe())
@@ -195,51 +180,193 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
         handleIntent(intent)
     }
 
+    private fun handleUri(uri: Uri) {
+        if (uri.scheme == "file") {
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    pendingFileUris.add(uri)
+                    ActivityCompat.requestPermissions(this@ReportListActivity,
+                            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                            READ_EXTERNAL_STORAGE_PERMISSION_REQUEST)
+                    return
+                }
+            }
+        }
+        AddFile().execute(uri)
+    }
+
     private fun handleIntent(intent: Intent) {
         if (intent.action != null) {
             val action: String? = intent.action
-            val uri: Uri? = intent.data
-            if (action == Intent.ACTION_VIEW && uri != null) {
-                if (uri.scheme == "file") {
-                    if (Build.VERSION.SDK_INT >= 23) {
-                        if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                            pendingFileUris.add(uri)
-                            ActivityCompat.requestPermissions(this@ReportListActivity,
-                                    arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
-                                    READ_EXTERNAL_STORAGE_PERMISSION_REQUEST)
-                            return
+            if (action == Intent.ACTION_VIEW) {
+                val uri: Uri? = intent.data
+                if (uri != null) {
+                    handleUri(uri)
+                }
+            } else if (action == Intent.ACTION_SEND) {
+                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                if (uri != null) {
+                    handleUri(uri)
+                } else if (action == Intent.ACTION_SEND_MULTIPLE) {
+                    val uriList = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                    if (uriList != null) {
+                        for (i in uriList) {
+                            handleUri(i)
                         }
                     }
                 }
+            }
+        }
+    }
 
-                AddFile().execute(uri)
+    private fun updatePreferences() {
+        val sharedPreferences = getDefaultSharedPreferences(this)
+        val key = getString(R.string.preferences_uimode_key)
+
+        when (sharedPreferences?.contains(key)) {
+            false -> {
+                val oldSharedPreferences = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE)
+                if (oldSharedPreferences?.contains(key) == true) {
+                    oldSharedPreferences.getString(key, "").let {
+                        when (it) {
+                            "ON" -> {
+                                oldSharedPreferences.edit()?.remove(key)
+                                sharedPreferences.edit()?.putString(key, "on")?.apply()
+                            }
+                            "OFF" -> {
+                                oldSharedPreferences.edit()?.remove(key)
+                                sharedPreferences.edit()?.putString(key, "off")?.apply()
+
+                            }
+                            else -> {
+                            }
+                        }
+                    }
+                }
+            }
+            true -> {
+                try {
+                    sharedPreferences.getBoolean(key, false).let {
+                        when (it) {
+                            false -> {
+                                sharedPreferences.edit()?.remove(key)
+                                sharedPreferences.edit()?.putString(key, "off")?.apply()
+                            }
+                            true -> {
+                                sharedPreferences.edit()?.remove(key)
+                                sharedPreferences.edit()?.putString(key, "on")?.apply()
+                            }
+                        }
+                    }
+                }
+                catch(_: ClassCastException) {}
             }
         }
     }
 
     private fun applyUiMode() {
-        val sharedPreferences: SharedPreferences? = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE)
-        sharedPreferences?.getString(getString(R.string.preferences_uimode_key), "OFF").let {
+        val sharedPreferences = getDefaultSharedPreferences(this)
+        val key = getString(R.string.preferences_uimode_key)
+
+        sharedPreferences?.getString(getString(R.string.preferences_uimode_key), "system").let {
             when (it) {
-                "OFF" -> {
+                "off" -> {
                     if (AppCompatDelegate.getDefaultNightMode()!=AppCompatDelegate.MODE_NIGHT_NO) {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                         recreate()
                     }
                 }
-                "ON" -> {
+                "on" -> {
                     if (AppCompatDelegate.getDefaultNightMode()!=AppCompatDelegate.MODE_NIGHT_YES) {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                         recreate()
                     }
                 }
-                /* "AUTO" -> {
-                    if (AppCompatDelegate.getDefaultNightMode()!=AppCompatDelegate.MODE_NIGHT_AUTO) {
-                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
+                "system" -> {
+                    if (AppCompatDelegate.getDefaultNightMode()!=AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
+                        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
                         recreate()
                     }
-                } */
+                }
             }
+        }
+    }
+
+    private fun setLocale() {
+        try {
+            val stream = applicationContext.resources.openRawResource(R.raw.lang)
+            val content = stream.bufferedReader().use(BufferedReader::readText)
+            Core.setLocale(content)
+        }
+        catch (error: Exception) {
+        }
+    }
+
+    private fun setPrefLocale() {
+        val sharedPreferences: SharedPreferences? = getDefaultSharedPreferences(this)
+        sharedPreferences?.getBoolean(getString(R.string.preferences_report_translate_key), false).let {
+            when (it) {
+                false -> {
+                    Core.setLocale("")
+                }
+                true -> {
+                    setLocale()
+                }
+            }
+        }
+
+        sharedPreferences?.getString(getString(R.string.preferences_locale_key), "system").let {
+            val locale: Locale =
+                if (it == null || it == "system") {
+                    if (Build.VERSION.SDK_INT >= 24) {
+                        Resources.getSystem().configuration.locales.get(0)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        Resources.getSystem().configuration.locale
+                    }
+                } else {
+                    val language = it.split("-r")
+                    if (language.size > 1) {
+                        Locale(language[0], language[1])
+                    } else {
+                        Locale(language[0])
+                    }
+                }
+
+            Locale.setDefault(locale)
+
+            if (Lingver.getInstance().getLocale() != locale) {
+                Lingver.getInstance().setLocale(this, locale)
+                recreate()
+            }
+        }
+    }
+
+    fun showReport(id: Int) {
+        intent.putExtra(Core.ARG_REPORT_ID, id)
+        if (twoPane) {
+            val fragment: ReportDetailFragment = ReportDetailFragment().apply {
+                arguments = Bundle().apply {
+                    putInt(Core.ARG_REPORT_ID, id)
+                }
+            }
+
+            supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.report_detail_container, fragment)
+                    .commit()
+
+            disposable.add(reportModel.getReport(id)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnSuccess {
+                        title = it.filename
+                    }.subscribe())
+        } else {
+            val intent = Intent(this@ReportListActivity, ReportDetailActivity::class.java)
+            intent.putExtra(Core.ARG_REPORT_ID, id)
+
+            startActivityForResult(intent, SHOW_REPORT_REQUEST)
         }
     }
 
@@ -250,6 +377,9 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe())
 
+        if (intent.getIntExtra(Core.ARG_REPORT_ID, -1)==id) {
+            intent.putExtra(Core.ARG_REPORT_ID, -1)
+        }
         if (twoPane) {
             val fragment = supportFragmentManager.findFragmentById(R.id.report_detail_container)
             if (fragment != null && (fragment as ReportDetailFragment).id == id) {
@@ -269,115 +399,31 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
 
         menu?.findItem(R.id.action_subscribe)?.isEnabled=false
         subscriptionManager.ready.observe(this, Observer {
-            if (menu?.findItem(R.id.action_subscribe)?.title!=getString(R.string.subscribed_text)) {
+            if (subscriptionManager.subscribed.value == false) {
                 menu?.findItem(R.id.action_subscribe)?.isEnabled = it
             }
         })
 
-        val sharedPreferences: SharedPreferences? = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE)
-        sharedPreferences?.getString(getString(R.string.preferences_uimode_key), "OFF").let {
-            if (it != null) {
-                when (it) {
-                    "OFF" -> {
-                        menu?.findItem(R.id.action_nightmode).let { item ->
-                            item?.setChecked(false)
-                        }
-                        /* menu?.findItem(R.id.action_nightmode_auto).let { item ->
-                            item?.setChecked(false)
-                        } */
-                    }
-                    "ON" -> {
-                        menu?.findItem(R.id.action_nightmode).let { item ->
-                            item?.setChecked(true)
-                        }
-                        /* menu?.findItem(R.id.action_nightmode_auto).let { item ->
-                            item?.setChecked(false)
-                        } */
-                    }
-                    /* "AUTO" -> {
-                        menu?.findItem(R.id.action_nightmode_auto).let { item ->
-                            item?.setChecked(true)
-                        }
-                        menu?.findItem(R.id.action_nightmode).let { item ->
-                            item?.setEnabled(false)
-                        }
-                    } */
-                }
-            }
-        }
-
-        menu?.findItem(R.id.action_nightmode).let {
-            it?.setOnMenuItemClickListener { item ->
-                if (item.isChecked()) {
-                    item.setChecked(false)
-                    sharedPreferences
-                            ?.edit()
-                            ?.putString(getString(R.string.preferences_uimode_key), "OFF")
-                            ?.apply()
-
-                    applyUiMode()
-                } else {
-                    item.setChecked(true)
-                    sharedPreferences
-                            ?.edit()
-                            ?.putString(getString(R.string.preferences_uimode_key), "ON")
-                            ?.apply()
-
-                    applyUiMode()
-                }
-
-                true
-            }
-        }
-
-        /* menu?.findItem(R.id.action_nightmode_auto).let {
-            it?.setOnMenuItemClickListener {
-                if (it.isChecked()) {
-                    it.setChecked(false)
-                    sharedPreferences
-                            ?.edit()
-                            ?.putString(getString(R.string.preferences_uimode_key), "OFF")
-                            ?.apply()
-                    menu?.findItem(R.id.action_nightmode).let { item ->
-                        item?.setEnabled(true)
-                    }
-                    applyUiMode()
-                } else {
-                    it.setChecked(true)
-                    sharedPreferences
-                            ?.edit()
-                            ?.putString(getString(R.string.preferences_uimode_key), "AUTO")
-                            ?.apply()
-                    menu?.findItem(R.id.action_nightmode).let { item ->
-                        item?.setEnabled(false)
-                    }
-                    applyUiMode()
-                }
-                true
-            }
-        } */
-
         subscriptionManager.subscribed.observe(this, Observer {
             if (it) {
-                menu?.findItem(R.id.action_nightmode)?.isVisible=true
-                menu?.findItem(R.id.action_subscribe).let { item ->
-                    item?.isEnabled=true
-                    item?.title = getString(R.string.subscribed_text)
-
-                    item?.setOnMenuItemClickListener { _ ->
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = Uri.parse(getString(R.string.subscription_manage_url).replace('|', '&'))
-                        startActivity(intent)
-
-                        true
+                if (subscriptionManager.isLifetime.value == true) {
+                    menu?.findItem(R.id.action_subscribe).let { item ->
+                        item?.title = getString(R.string.subscribe_text)
+                        item?.isVisible = false
                     }
-                }
+                } else {
+                    menu?.findItem(R.id.action_subscribe).let { item ->
+                        item?.isEnabled = true
+                        item?.title = getString(R.string.subscribed_text)
 
-                if (!Core.thanked) {
-                    // Show thanks message
-                    Core.thanked=true
-                    val toast = Toast.makeText(applicationContext, R.string.thanks_text, Toast.LENGTH_SHORT)
-                    toast.show()
+                        item?.setOnMenuItemClickListener { _ ->
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = Uri.parse(getString(R.string.subscription_manage_url).replace('|', '&'))
+                            startActivity(intent)
+
+                            true
+                        }
+                    }
                 }
             } else {
                 menu?.findItem(R.id.action_subscribe).let { item ->
@@ -385,7 +431,7 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
 
                     item?.setOnMenuItemClickListener { _ ->
                         val intent = Intent(this, SubscribeActivity::class.java)
-                        startActivity(intent)
+                        startActivityForResult(intent, SUBSCRIBE_REQUEST)
 
                         true
                     }
@@ -402,10 +448,21 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
             }
         }
 
+        menu?.findItem(R.id.action_settings).let {
+            it?.setOnMenuItemClickListener {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+
+                true
+            }
+        }
+
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 OPEN_FILE_REQUEST -> {
@@ -424,6 +481,17 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
                         }
                     }
                 }
+                SUBSCRIBE_REQUEST -> {
+                    Toast.makeText(applicationContext, R.string.thanks_text, Toast.LENGTH_SHORT).show()
+                }
+                SHOW_REPORT_REQUEST -> {
+                    if (resultData!=null) {
+                        val id = resultData.getIntExtra(Core.ARG_REPORT_ID, -1)
+                        if (id!=-1 && twoPane) {
+                            showReport(id)
+                        }
+                    }
+                }
             }
         }
     }
@@ -439,17 +507,21 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
         setSupportActionBar(tool_bar)
         tool_bar.title = title
 
+        updatePreferences()
+
         subscriptionManager = SubscriptionManager.getInstance(application)
         lifecycle.addObserver(subscriptionManager)
 
+        setLocale()
         subscriptionManager.subscribed.observe(this, Observer {
-            if (it==true)
+            if (it==true) {
                 applyUiMode()
+                setPrefLocale()
+            }
         })
 
         val viewModelFactory = Injection.provideViewModelFactory(this)
-        ViewModelProviders.of(this, viewModelFactory).get(ReportViewModel::class.java)
-        reportModel = ViewModelProviders.of(this, viewModelFactory).get(ReportViewModel::class.java)
+        reportModel = ViewModelProvider(this, viewModelFactory).get(ReportViewModel::class.java)
 
         add_button.setOnClickListener {
             if (Build.VERSION.SDK_INT >= 19) {
@@ -490,6 +562,26 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
             }
         }
 
+        clear_btn.setOnClickListener {
+            disposable.add(reportModel.deleteAllReports()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    intent.putExtra(Core.ARG_REPORT_ID, -1)
+                    if (twoPane) {
+                        val fragment = supportFragmentManager.findFragmentById(R.id.report_detail_container)
+                        if (fragment != null) {
+                            supportFragmentManager
+                                .beginTransaction()
+                                .detach(fragment)
+                                .commit()
+
+                                title = getString(R.string.app_name)
+                        }
+                    }
+            })
+        }
+
         // The detail container view will be present only in the
         // large-screen layouts (res/values-w900dp).
         // If this view is present, then the
@@ -504,6 +596,7 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
 
     override fun onStart() {
         super.onStart()
+
         disposable.add(reportModel.getAllReports()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -521,14 +614,23 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
 
                         if (!found)
                             View.inflate(this, R.layout.hello_layout, rootLayout)
+
+                        clear_btn.visibility = View.INVISIBLE
                     } else {
                         for (i: Int in rootLayout.childCount downTo 1) {
                             if (rootLayout.getChildAt(i - 1).id == R.id.hello_layout)
                                 rootLayout.removeViewAt(i - 1)
                         }
                         rootLayout.removeView(hello_layout)
+                        clear_btn.visibility = View.VISIBLE
+
+
                     }
                 })
+
+        if (twoPane && intent.getIntExtra(Core.ARG_REPORT_ID, -1)!=-1) {
+            showReport(intent.getIntExtra(Core.ARG_REPORT_ID, -1))
+        }
     }
 
     override fun onStop() {
@@ -539,35 +641,17 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
     }
 
     private fun setupRecyclerView(recyclerView: RecyclerView) {
-        recyclerView.adapter = ItemRecyclerViewAdapter(this, reports, twoPane)
+        recyclerView.adapter = ItemRecyclerViewAdapter()
+        recyclerView.isNestedScrollingEnabled = false
     }
 
-    class ItemRecyclerViewAdapter(private val parentActivity: ReportListActivity,
-                                         private val reports: List<Report>,
-                                         private val twoPane: Boolean) :
-            RecyclerView.Adapter<ItemRecyclerViewAdapter.ViewHolder>() {
-
+    inner class ItemRecyclerViewAdapter : RecyclerView.Adapter<ItemRecyclerViewAdapter.ViewHolder>() {
         private val onClickListener: View.OnClickListener
 
         init {
             onClickListener = View.OnClickListener {
                 val report: Report = it.tag as Report
-                if (twoPane) {
-                    val fragment: ReportDetailFragment = ReportDetailFragment().apply {
-                        arguments = Bundle().apply {
-                            putInt(ReportDetailFragment.ARG_REPORT_ID, report.id)
-                        }
-                    }
-                    parentActivity.supportFragmentManager
-                            .beginTransaction()
-                            .replace(R.id.report_detail_container, fragment)
-                            .commit()
-                } else {
-                    val intent = Intent(it.context, ReportDetailActivity::class.java).apply {
-                        putExtra(ReportDetailFragment.ARG_REPORT_ID, report.id)
-                    }
-                    it.context.startActivity(intent)
-                }
+                showReport(report.id)
             }
         }
 
@@ -597,14 +681,16 @@ class ReportListActivity : AppCompatActivity(), ReportActivityListener {
             init {
                 view.delete_button.setOnClickListener {
                     if (id != -1)
-                        parentActivity.deleteReport(id)
+                        deleteReport(id)
                 }
             }
         }
     }
 
     companion object {
-        const val OPEN_FILE_REQUEST= 40
+        const val SHOW_REPORT_REQUEST = 20
+        const val SUBSCRIBE_REQUEST = 30
+        const val OPEN_FILE_REQUEST = 40
         const val READ_EXTERNAL_STORAGE_PERMISSION_REQUEST = 50
     }
 }

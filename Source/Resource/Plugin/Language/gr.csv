@@ -34,6 +34,7 @@
  day1; μέρα
  day2; μέρες
  day3; μέρες
+ dB0;
  dB1;
  dB2;
  dB3;
@@ -117,6 +118,9 @@
  month1; μήνας
  month2; μήνες
  month3; μήνες
+ object1;
+ object2;
+ object3;
  pixel1; εικονοστοιχείο
  pixel2; εικονοστοιχεία
  pixel3; εικονοστοιχεία
@@ -153,9 +157,14 @@ ActiveFormatDescription;
 ActiveFormatDescription_MuxingMode;
 Actor;Actor
 Actor_Character;Character played
+Add creation date to text output;
+Add version to text output;
 Added_Date;
 Address;Διεύθυνση
 AdID;
+ADM: Show ChannelFormats;
+ADM: Show TrackUIDs;
+AdmProfile;
 Advanced;Για προχωρημένους
 Advanced mode;Κατάσταση λειτουργίας για προχωρημένους
 Album;Album
@@ -181,9 +190,12 @@ Audio1;Πρώτη ροή ήχου
 Audio2;Δεύτερη ροή ήχου
 AudioComments;
 AudioCount;Αριθμός των ροών ήχου
+AudioDescription;
 AudioDescriptionPresent;
 AudioDescriptionType;
 AudioLoudnessStandard;
+AudioRenderingIndication;
+AudioSceneInfoID;
 AudioTrackLayout;
 Author;Author
 BarCode;BarCode
@@ -206,7 +218,10 @@ Bits-(Pixel*Frame);Bits/(Εικονοστοιχείο*Πλαίσιο)
 BufferSize;
 Cancel;Άκυρο
 Channel(s);Κανάλι(α)
+ChannelCoded;
+ChannelConfiguration;
 ChannelLayout;
+ChannelMode;
 ChannelPositions;Θέσεις καναλιών
 Chapter(s);Κεφάλαιο(α)
 Chapters;Κεφάλαια
@@ -225,6 +240,8 @@ Choose language;Επιλέξτε την επιθυμητή γλώσσα
 Choreographer;Χορογράφος
 Chroma;Χρώμα
 ChromaSubsampling;
+Classifier;
+ClearList;
 Close;Κλείσιμο
 Close all before open;Κλείστε όλα τα ανοιχτά αρχεία πριν το άνοιγμα νέων
 ClosedCaptionsLanguage;
@@ -269,6 +286,7 @@ Compression_Mode_Lossless;
 Compression_Mode_Lossy;
 Compression_Ratio;
 Conductor;Conductor
+ConformanceCheck;
 ContactEmail;
 ContactTelephoneNumber;
 Container and general information;Container και γενικές πληροφορίες
@@ -287,15 +305,22 @@ Cover_Type;
 Cropped;
 Custom;Προσαρμοσμένη
 Customize;Προσαρμόστε
+DarkMode;
 Date;Ημερομηνία
 Debug;Αποσφαλμάτωση
 Decimal point;Decimal point
+Default_Setting;
+DefaultTargetDeviceConfig;
 Delay;Καθυστέρηση
 Delay_Source;
 Delay_Source_Container;
 Delay_Source_Stream;
 Delete;Διαγραφή
 Description;Περιγραφή
+dialnorm;
+DialogueCorrected;
+DialogueEnhancement;
+DialogueNormalization;
 Digitized_Date;Ημερομηνία Ψηφιοποίησης
 Dimensions;
 Director;Director
@@ -306,13 +331,20 @@ DisplayAspectRatio_CleanAperture;
 DisplayAspectRatio_Original;
 DistributedBy;Distributed by
 Distributor;
+DolbyAtmos;
 Donate;Δωρεές
 DotsPerInch;
+Downmix;
+DrcSets_Count;
+DrcSets_Effects;
 Duration;
 Duration_End;
 Duration_Start;
+DynamicRangeControl;
+Eac3DrcProfile;
 Edit;Επεξεργασία
 EditedBy;Τροποποιημένο από
+EditorialClassification;
 ElementCount;
 EMail;E-Mail
 Encoded_Application;Εφαρμογή εγγραφής
@@ -324,12 +356,14 @@ EncodedBy;Κωδικοποιημένο από
 EPG_Positions;
 EpisodeTitleNumber;
 Error_File;Παρουσιάστηκε σφάλμα κατά το διάβασμα του αρχείου
+Error_File_Write;
 ExecutiveProducer;Executive producer
 Exit;Έξοδος
 Exit_Hint;Κλείνει το πρόγραμμα
 Export;Εξαγωγή
 Export_Hint;Εξαγωγή σε custom format
 Extensions;Συνήθεις επεκτάσεις
+External_Media_NotMounted;
 Family;
 Fax;Fax
 File;Αρχείο
@@ -344,6 +378,7 @@ FileExtension;Επέκταση αρχείου
 FileName;Όνομα αρχείου
 FileNameExtension;
 FileSize;Μέγεθος αρχείου
+FlatPanelTv;
 Folder;Φάκελος
 Folder (R);Φάκελος (R)
 Folder (R)_Hint;Επιλέξτε έναν φάκελο για εξέταση (με τους υποφακέλους αναδρομικά)
@@ -353,6 +388,7 @@ FolderName;Όνομα φακέλου
 Format;Μορφοποίηση
 Format_Commercial;
 Format_Commercial_IfAny;
+Format_Compression;
 Format_Description;
 Format_Info;
 Format_Level;
@@ -398,6 +434,7 @@ FrameRate_Mode_CFR;
 FrameRate_Mode_VFR;
 FrameRate_Nominal;
 FrameRate_Original;
+FrameRate_Real;
 General;Γενικά
 Genre;Genre
 Genre_000;Blues
@@ -597,7 +634,10 @@ Gop_OpenClosed;
 Gop_OpenClosed_Closed;
 Gop_OpenClosed_FirstFrame;Групаванне
 Gop_OpenClosed_Open;
+Graph;
+Group;
 Grouping;
+GroupPreset;
 h; h
 HDR_Format;
 Header file;Δημιουργήστε αρχείο κεφαλίδας
@@ -606,6 +646,7 @@ Height_CleanAperture;
 Height_Original;
 Help;Βοήθεια
 Hint;
+HomeTheaterAvr;
 How many audio streams?;Πόσες ροές ήχου?
 How many chapters streams?;Πόσες ροές κεφαλαίων?
 How many text streams?;Πόσες ρόες κειμένου?
@@ -613,12 +654,17 @@ How many video streams?;Πόσες ροές video?
 HTML;HTML
 ID;ID
 IdentClockStart;
+IFrameInterval;
 Image;Εικόνα
 Image stream(s);Ροές εικόνας
 Image_Codec_List;Συμπιεστές εικόνας
 ImageCount;Αριθμός των ροών εικόνας
+ImmersiveStereo;
 Info;
 Instruments;Όργανα
+IntegratedLoudness_Level;
+IntegratedLoudness_Speech;
+InteractivityEnabled;
 Interlaced_BFF;Bottom Field First
 Interlaced_Interlaced;Διαπλεκόμενη σάρωση
 Interlaced_PPF;Συνεχής σάρωση
@@ -705,6 +751,7 @@ Language_hr;Croatian
 Language_ht;Haitian
 Language_hu;Hungarian
 Language_hy;Armenian
+Language_hy-az;
 Language_hz;Herero
 Language_ia;Auxiliary Language Association
 Language_id;Indonesian
@@ -749,10 +796,12 @@ Language_mi;Maori
 Language_mk;Macedonian
 Language_ml;Malayalam
 Language_mn;Mongolian
+Language_mn-cn;
 Language_mo;Moldavian
 Language_More;
 Language_mr;Marathi
 Language_ms;Malay
+Language_ms-bn;
 Language_mt;Maltese
 Language_mul;Πολλαπλές γλώσσες
 Language_my;Burmese
@@ -762,6 +811,7 @@ Language_nd;Ndebele
 Language_ne;Nepali
 Language_ng;Ndonga
 Language_nl;Dutch
+Language_nl-be;
 Language_nn;Norwegian Nynorsk
 Language_no;Norwegian
 Language_nr;Ndebele
@@ -793,6 +843,7 @@ Language_si;Sinhala
 Language_sk;Slovak
 Language_sl;Slovenian
 Language_sm;Samoan
+Language_smi;
 Language_sn;Shona
 Language_so;Somali
 Language_sq;Albanian
@@ -835,10 +886,44 @@ Language_zh-tw;
 Language_zu;Zulu
 LawRating;Law rating
 LCCN;LCCN
+LfeAttenuationKnown;
+LfeMixGain;
 Library;Muxing library
+Lifetime_Subscribe_Button;
 Lightness;
 LineUpStart;
+LinkedTo_Bed_Pos;
+LinkedTo_ChannelFormat_Pos;
+LinkedTo_Content_Pos;
+LinkedTo_Group_Pos;
+LinkedTo_Object_Pos;
+LinkedTo_PackFormat_Pos;
+LinkedTo_SignalGroup_Pos;
+LinkedTo_Substream_Pos;
+LinkedTo_TrackUID_Pos;
 List;
+LoRoCenterMixGain;
+LoRoSurroundMixGain;
+Loudness_Anchor;
+Loudness_Anchor_Album;
+Loudness_Count;
+Loudness_Count_Album;
+Loudness_MaximumMomentary;
+Loudness_MaximumMomentary_Album;
+Loudness_MaximumOfRange;
+Loudness_MaximumOfRange_Album;
+Loudness_MaximumShortTerm;
+Loudness_MaximumShortTerm_Album;
+Loudness_ProductionMixingLevel;
+Loudness_ProductionMixingLevel_Album;
+Loudness_Program;
+Loudness_Program_Album;
+Loudness_Range;
+Loudness_Range_Album;
+Loudness_RoomType;
+Loudness_RoomType_Album;
+LtRtCenterMixGain;
+LtRtSurroundMixGain;
 Lyricist;Lyricist
 Lyrics;
 Mastered_Date;Mastered date
@@ -851,7 +936,11 @@ matrix_coefficients;
 Matrix_Format;
 MaxCLL;
 MaxFALL;
+MaxGain;
+MaximumMomentaryLoudness;
+MaxTruePeak;
 MediaInfo_About;Παρέχει λεπτομερείς πληροφορίες\r\nγια αρχεία πολυμέσων:\r\nMatroska, OGG (συμπεριλαμβάνεται OGM)\r\nMPEG1 (συμπεριλαμβάνεται VCD)\r\nMPEG2 (συμπεριλαμβάνεται DVD και SVCD)\r\nMPEG4 (συμπεριλαμβάνεται Itunes M4A)\r\nQuicktime\r\nRealMedia\r\nWindowsMedia (συμπεριλαμβάνεται WMV, WMA)\r\nMicrosoft RIFF (συμπεριλαμβάνεται AVI, WAV)\r\nΜορφοποιήσεις ήχου (AC3, DTS, AAC, AU, AIFF...)
+MediaInfo_About_About;
 Menu;Μενού
 Menu stream(s);Ροές μενού
 Menu_Codec_List;Συμπιεστές μενού
@@ -859,12 +948,14 @@ Menu_Hint;Περισσότερες πιθανότητες
 Menu_No;Χωρίς μενού
 MenuCount;Αριθμός των ροών μενού
 MenuID;
+MixType;
 mn; min
 Mood;Mood
 More;Περισσότερα
 Movie;Όνομα ταινίας
 ms; ms
 MSDI;MSDI
+MultipleStream;
 MusicBy;
 MuxingMode;
 MuxingMode_MoreInfo;
@@ -879,8 +970,18 @@ NewVersion_Question_Content;
 NewVersion_Question_Title;
 No;Όχι
 Not yet;
+NumberOfChannelFormats;
+NumberOfContents;
 NumberOfDynamicObjects;
+NumberOfElementaryStreams;
+NumberOfObjects;
+NumberOfPackFormats;
+NumberOfPresentations;
+NumberOfProgrammes;
+NumberOfSubstreams;
+NumberOfTrackUIDs;
 NumColors;
+ObjectCount;
 OK;OK
 One output file per input file;Ένα αρχείο εξόδου για κάθε αρχείο εισόδου
 Open;Άνοιγμα
@@ -948,6 +1049,8 @@ PartNumber;
 PartTotal;
 Performer;Performer
 Period;Περίοδος
+Phase90FilterInfo;
+Phase90FilterInfo2ch;
 Phone;Τηλέφωνο
 PictureRatio;
 PixelAspectRatio;Λόγος εικονοστοιχείου
@@ -959,9 +1062,23 @@ Played_First_Date;
 Played_Last_Date;
 PlayTime;Διάρκεια
 PodcastCategory;
+PortableHeadphones;
+PortableSpeakers;
 Position;Θέση
+Position_Cartesian;
+Position_Polar;
 Position_Total;
 Preferences;Επιλογές/Προτιμήσεις
+PreferredDownmix;
+Premium;
+Premium_Summary;
+PreselectionLabel;
+Presentation;
+PresentationConfig;
+PresentationConfig_ContentClassifier;
+PresentationID;
+PreviousDownmixType5ch;
+PreviousMixType2ch;
 PrimaryAudioLanguage;
 Producer;Παραγωγός
 ProductionDesigner;ProductionDesigner
@@ -976,14 +1093,21 @@ Purchased_Date;Ημερομηνία αγοράς
 Quote character;Quote character
 RadioStation;Ραδιοφωνικός σταθμός
 Rating;Αξιολόγηση
+RealtimeLoudnessCorrected;
 Recorded_Date;Ημερομηνία εγγραφής
 Recorded_Location;Τοποθεσία εγγραφής
 Released_Date;Ημερομηνία Έκδοσης
 RemixedBy;Remixed by
+RenderMode;
+Renew;
 ReplayGain_Gain;
 ReplayGain_Peak;
+Report;
 Resolution;Ανάλυση
+RestoreLifetimeSubscription;
 s;s
+SamplePeakLevel;
+SamplePeakLevel_Album;
 SamplesPerFrame;
 SamplingCount;
 SamplingRate;Συχνότητα δειγματοληψίας
@@ -1022,9 +1146,11 @@ ShimName;
 ShimVersion;
 Show menu;Εμφάνιση μενού
 Show toolbar;Εμφάνιση εργαλειοθήκης
+SignalGroup;
 SigningPresent;
 SignLanguage;
 Sort;Ταξινόμηση κατά
+SoundCategory;
 SoundEngineer;Sound engineer
 Source;
 Source_Duration;
@@ -1032,6 +1158,7 @@ Source_FrameCount;
 Source_SamplingCount;
 Source_StreamSize;
 Source_StreamSize_Encoded;
+SpokenSubtitles;
 Standard;Στάνταρ
 StoreMethod_InterleavedFields;
 StoreMethod_SeparatedFields;
@@ -1041,6 +1168,7 @@ Stream;Ροή
 Stream_MoreInfo;Περισσότερες πληροφορίες σχετικά με την ροή
 StreamCount;Αριθμός των ροών αυτού του τύπου
 StreamID;Stream ID
+streamIdentifier;
 StreamKind;Τύπος/Είδος Ροής
 StreamKindID;
 StreamKindPos;
@@ -1049,14 +1177,34 @@ StreamSize_Demuxed;
 StreamSize_Encoded;
 StreamSize_Proportion;
 Subject;Subject
+Subscribe;
+Subscribe_Button;
+Subscribe_Failed;
+Subscribe_Manage;
+Subscribe_Renew;
+Subscribe_Renew_Price;
+Subscribe_Unaviable;
+Subscribe_Waiting;
+Subscription_Active;
+Subscription_Android;
+Subscription_Ended;
+Subscription_Expired;
+Subscription_Lifetime;
+Subscription_Thanks;
+Substream;
 SubTrack;SubTrack
+SubtstreamIdChannel;
 Summary;Περίληψη
 Supported formats;Υποστηριζόμενες μορφοποιήσεις
 Supported?;Υποστηρίζεται?
+SupportUs;
+SurroundAttenuationKnown;
+SwitchGroup;
 Synopsis;Σύνοψη
 SystemId;Id
 Tagged_Application;
 Tagged_Date;Tagged date
+TargetDeviceConfig;
 Technician;Τεχνικός
 TermsOfUse;Όροι χρήσης
 TertiaryAudioLanguage;
@@ -1089,10 +1237,14 @@ TotalProgrammeDuration;
 Track;Track name
 Track_Count;Track count
 transfer_characteristics;
+Translate_Reports;
 Translator;Μεταφραστής
 Tree;Δένδρο
 Tree & Text;Δένδρο & Κείμενο
+TruePeakLevel;
+TruePeakLevel_Album;
 Type;
+TypeDefinition;
 UniqueID;
 UniversalAdID;
 UniversalAdID_Registry;
@@ -1110,8 +1262,10 @@ VideoComments;
 VideoCount;Αριθμός των ροών video
 View;Προβολή
 View_Hint;Αλλάζει τον τρόπο προβολής πληροφοριών
+Views;
 Warning : more streams in the files;Προειδοποίηση : υπάρχουν περισσότερες ροές στα αρχεία
 Web;Διαδύκτιο
+WebSite;
 WebSite_Audio;Πήγαινε στην ιστοσελίδα αυτού του συμπιεστή ήχου
 WebSite_Audio_More;Πήγαινε στην ιστοσελίδα (%Url%) to find this audio codec
 WebSite_General;Go to the web site of a player for this file
@@ -1131,5 +1285,5 @@ Written_Location;Τοποθεσία καταγραφής
 WrittenBy;Γραμμένο από
 Yes;Ναι
 Your system;Το σύστημά σας
-ZZ_Automatic_Percent;67
-ZZ_AutomaticLanguage_Percent;75
+ZZ_Automatic_Percent;59
+ZZ_AutomaticLanguage_Percent;66
