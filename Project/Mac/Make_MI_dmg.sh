@@ -22,8 +22,8 @@ else
 fi
 
 APPNAME="MediaInfo"
-APPNAME_lower=`echo ${APPNAME} |awk '{print tolower($0)}'`
-KIND_lower=`echo ${KIND} |awk '{print tolower($0)}'`
+APPNAME_lower=$(echo "${APPNAME}" | awk '{print tolower($0)}')
+KIND_lower=$(echo "${KIND}" | awk '{print tolower($0)}')
 SIGNATURE="MediaArea.net"
 FILES="tmp-${APPNAME}_${KIND}"
 TEMPDMG="tmp-${APPNAME}_${KIND}.dmg"
@@ -63,10 +63,10 @@ if [ "$KIND" = "CLI" ]; then
 
     mkdir -p "${FILES}-Root/usr/local/bin"
     cp "../GNU/CLI/${APPNAME_lower}" "${FILES}-Root/usr/local/bin"
-    codesign -f -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}-Root/usr/local/bin/${APPNAME_lower}"
+    codesign -f --deep --options=runtime -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}-Root/usr/local/bin/${APPNAME_lower}"
 
     pkgbuild --root "${FILES}-Root" --identifier "net.mediaarea.${APPNAME_lower}.mac-${KIND_lower}" --sign "Developer ID Installer: ${SIGNATURE}" --version "${VERSION}" "${FILES}/${APPNAME_lower}.pkg"
-    codesign -f -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME_lower}.pkg"
+    codesign -f --deep --options=runtime -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME_lower}.pkg"
 
 fi
 
@@ -90,11 +90,11 @@ if [ "$KIND" = "GUI" ]; then
     cp "../GNU/GUI/${APPNAME_lower}-${KIND_lower}" "${FILES}/${APPNAME}.app/Contents/MacOS/${APPNAME}"
     cp Info.plist "${FILES}/${APPNAME}.app/Contents"
     sed -i '' -e "s/VERSION/${VERSION}/g" "${FILES}/${APPNAME}.app/Contents/Info.plist"
-    echo -n 'APPL????' > "${FILES}/${APPNAME}.app/Contents/PkgInfo"
+    printf '%s' 'APPL????' > "${FILES}/${APPNAME}.app/Contents/PkgInfo"
     cp ${APPNAME}.icns "${FILES}/${APPNAME}.app/Contents/Resources"
-    
-    codesign -f -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME}.app/Contents/MacOS/${APPNAME}"
-    codesign -f -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME}.app"
+
+    codesign -f --deep --options=runtime -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME}.app/Contents/MacOS/${APPNAME}"
+    codesign -f --deep --options=runtime -s "Developer ID Application: ${SIGNATURE}" --verbose "${FILES}/${APPNAME}.app"
 
 fi
 
@@ -103,11 +103,11 @@ echo ========== Create the disk image ==========
 echo
 
 # Check if an old image isn't already attached
-DEVICE=$(hdiutil info |grep -B 1 "/Volumes/${APPNAME}" |egrep '^/dev/' | sed 1q | awk '{print $1}')
+DEVICE=$(hdiutil info | grep -B 1 "/Volumes/${APPNAME}" | grep -E '^/dev/' | sed 1q | awk '{print $1}')
 test -e "$DEVICE" && hdiutil detach -force "${DEVICE}"
 
 hdiutil create "${TEMPDMG}" -ov -fs HFS+ -format UDRW -volname "${APPNAME}" -srcfolder "${FILES}"
-DEVICE=$(hdiutil attach -readwrite -noverify "${TEMPDMG}" | egrep '^/dev/' | sed 1q | awk '{print $1}')
+DEVICE=$(hdiutil attach -readwrite -noverify "${TEMPDMG}" | grep -E '^/dev/' | sed 1q | awk '{print $1}')
 sleep 2
 
 cd "/Volumes/${APPNAME}"
@@ -117,7 +117,7 @@ fi
 test -e .DS_Store && rm -fr .DS_Store
 cd - >/dev/null
 
-. Osascript_${KIND}.sh
+. "Osascript_${KIND}.sh"
 osascript_Function
 
 hdiutil detach "${DEVICE}"
@@ -128,9 +128,7 @@ echo ========== Convert to compressed image ==========
 echo
 hdiutil convert "${TEMPDMG}" -format UDBZ -o "${FINALDMG}"
 
-# Useless since the dmg will transit on no HFS+ partition (at least
-# on the linux server)
-#codesign -f -s "Developer ID Application: ${SIGNATURE}" --verbose "${FINALDMG}"
+codesign -f --deep --options=runtime -s "Developer ID Application: ${SIGNATURE}" --verbose "${FINALDMG}"
 
 unset -v APPNAME APPNAME_lower KIND KIND_lower VERSION SIGNATURE
 unset -v TEMPDMG FINALDMG FILES DEVICE

@@ -1,7 +1,7 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
 			<ProjectGuid>{8AF87745-B671-4B4E-A428-B47B72F174BA}</ProjectGuid>
-			<ProjectVersion>18.2</ProjectVersion>
+			<ProjectVersion>19.7</ProjectVersion>
 			<FrameworkType>VCL</FrameworkType>
 			<MainSource>MediaInfo_GUI.cpp</MainSource>
 			<Base>True</Base>
@@ -42,12 +42,12 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<Defines>MEDIAINFO_DLL_STATIC;$(Defines)</Defines>
-			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=19.04.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=;Comments=</VerInfo_Keys>
+			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=21.09.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=;Comments=</VerInfo_Keys>
 			<Manifest_File>None</Manifest_File>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-			<VerInfo_MinorVer>04</VerInfo_MinorVer>
+			<VerInfo_MinorVer>09</VerInfo_MinorVer>
 			<VerInfo_Release>0</VerInfo_Release>
-			<VerInfo_MajorVer>19</VerInfo_MajorVer>
+			<VerInfo_MajorVer>21</VerInfo_MajorVer>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;bindengine;soaprtl;DBXOracleDriver;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
@@ -105,7 +105,7 @@
 		<PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
 			<VerInfo_Release>0</VerInfo_Release>
 			<LinkPackageStatics>rtl.lib;vcl.lib;bcbie.lib</LinkPackageStatics>
-			<VerInfo_Keys>CompanyName=MediaArea.net;FileDescription=MediaInfo;FileVersion=19.04.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=MediaInfo;ProductVersion=19.04.0.0;Comments=</VerInfo_Keys>
+			<VerInfo_Keys>CompanyName=MediaArea.net;FileDescription=MediaInfo;FileVersion=21.09.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=MediaInfo;ProductVersion=21.09.0.0;Comments=</VerInfo_Keys>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 		</PropertyGroup>
 		<ItemGroup>
@@ -135,6 +135,11 @@
 				<Form>AboutF</Form>
 				<DependentOn>..\..\..\Source\GUI\VCL\GUI_About.h</DependentOn>
 				<BuildOrder>5</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\Source\GUI\VCL\GUI_Plugin.cpp">
+				<Form>PluginF</Form>
+				<DependentOn>..\..\..\Source\GUI\VCL\GUI_Plugin.h</DependentOn>
+				<BuildOrder>10</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="..\..\..\Source\GUI\VCL\GUI_Export.cpp">
 				<Form>ExportF</Form>
@@ -192,6 +197,7 @@
 			<FormResources Include="..\..\..\Source\GUI\VCL\GUI_Web.dfm"/>
 			<FormResources Include="..\..\..\Source\GUI\VCL\GUI_Main.dfm"/>
 			<FormResources Include="..\..\..\Source\GUI\VCL\GUI_About.dfm"/>
+			<FormResources Include="..\..\..\Source\GUI\VCL\GUI_Plugin.dfm"/>
 			<FormResources Include="..\..\..\Source\GUI\VCL\GUI_Export.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

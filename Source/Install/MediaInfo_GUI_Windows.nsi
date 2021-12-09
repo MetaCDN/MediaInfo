@@ -5,7 +5,7 @@ RequestExecutionLevel admin
 ; Some defines
 !define PRODUCT_NAME "MediaInfo"
 !define PRODUCT_PUBLISHER "MediaArea.net"
-!define PRODUCT_VERSION "19.04"
+!define PRODUCT_VERSION "21.09"
 !define PRODUCT_VERSION4 "${PRODUCT_VERSION}.0.0"
 !define PRODUCT_WEB_SITE "http://MediaArea.net/MediaInfo"
 !define COMPANY_REGISTRY_OLD "Software\MediaArea.net"
@@ -110,7 +110,7 @@ Function .onInit
     SetRegView 64
   ${EndIf}
   !insertmacro MUI_LANGDLL_DISPLAY
-  
+
   ; Increment install count
   ReadRegDWORD $0 HKCU "${PRODUCT_REGISTRY}" "InstallCount"
   IntOp $0 $0 + 1
@@ -123,13 +123,13 @@ Section "SectionPrincipale" SEC01
   CreateShortCut "$SMPROGRAMS\MediaInfo.lnk" "$INSTDIR\MediaInfo.exe" "" "" "" "" "" "Convenient unified display of the most relevant technical and tag data for video and audio files"
   SetOutPath "$INSTDIR"
   File "/oname=MediaInfo.exe" "..\..\Project\BCB\GUI\Win32\Release\MediaInfo_GUI.exe"
-  File "/oname=MediaInfo_i386.dll" "..\..\..\MediaInfoLib\Project\MSVC2017\Win32\Release\MediaInfo.dll"
+  File "/oname=MediaInfo_i386.dll" "..\..\..\MediaInfoLib\Project\MSVC2019\Win32\Release\MediaInfo.dll"
   ${If} ${RunningX64}
-    File "..\..\..\MediaInfoLib\Project\MSVC2017\x64\Release\MediaInfo_InfoTip.dll"
-    File "..\..\..\MediaInfoLib\Project\MSVC2017\x64\Release\MediaInfo.dll"
+    File "..\..\..\MediaInfoLib\Project\MSVC2019\x64\Release\MediaInfo_InfoTip.dll"
+    File "..\..\..\MediaInfoLib\Project\MSVC2019\x64\Release\MediaInfo.dll"
   ${Else}
-    File "..\..\..\MediaInfoLib\Project\MSVC2017\Win32\Release\MediaInfo_InfoTip.dll"
-    File "..\..\..\MediaInfoLib\Project\MSVC2017\Win32\Release\MediaInfo.dll"
+    File "..\..\..\MediaInfoLib\Project\MSVC2019\Win32\Release\MediaInfo_InfoTip.dll"
+    File "..\..\..\MediaInfoLib\Project\MSVC2019\Win32\Release\MediaInfo.dll"
   ${EndIf}
   File "$%BPATH%\Windows\libcurl\Win32\Release\LIBCURL.DLL"
   File "$%BPATH%\Windows\libcurl\curl-ca-bundle.crt"
@@ -188,6 +188,10 @@ Section Uninstall
   Exec 'regsvr32 "$INSTDIR\MediaInfo_InfoTip.dll" /u /s'
   Sleep 3000
 
+  IfFileExists "$INSTDIR\graph_plugin_uninst.exe" 0 +3
+    ExecWait '"$INSTDIR\graph_plugin_uninst.exe" /S _?=$INSTDIR'
+    Delete "$INSTDIR\graph_plugin_uninst.exe"
+
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
   Delete "$INSTDIR\MediaInfo.exe"
@@ -198,6 +202,8 @@ Section Uninstall
   Delete "$INSTDIR\License.html"
   Delete "$INSTDIR\License.NoModifications.html"
   Delete "$INSTDIR\ReadMe.txt"
+  Delete "$INSTDIR\curl-ca-bundle.crt"
+  Delete "$INSTDIR\LIBCURL.DLL"
   Delete "$INSTDIR\Plugin\MediaInfo.cfg"
   Delete "$INSTDIR\Plugin\Custom\*.csv"
   Delete "$INSTDIR\Plugin\Language\*.csv"

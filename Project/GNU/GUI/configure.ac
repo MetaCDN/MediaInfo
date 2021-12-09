@@ -5,7 +5,7 @@ dnl #########################################################################
 dnl -------------------------------------------------------------------------
 dnl Name and version
 dnl
-AC_INIT([mediainfo-gui], [19.04])
+AC_INIT([mediainfo-gui], [21.09])
 
 dnl -------------------------------------------------------------------------
 dnl Test if we are at the good place
@@ -53,6 +53,7 @@ AC_ARG_ENABLE(arch-ppc,         AC_HELP_STRING([--enable-arch-ppc],         [Cre
 AC_ARG_ENABLE(arch-ppc64,       AC_HELP_STRING([--enable-arch-ppc64],       [Create Mac PPC64 architecture]),             , enable_arch_ppc64=no)
 AC_ARG_ENABLE(arch-i386,        AC_HELP_STRING([--enable-arch-i386],        [Create Mac i386 architecture]),              , enable_arch_i386=no)
 AC_ARG_ENABLE(arch-x86_64,      AC_HELP_STRING([--enable-arch-x86_64],      [Create Mac x86_64 architecture]),            , enable_arch_x86_64=no)
+AC_ARG_ENABLE(arch-arm64,       AC_HELP_STRING([--enable-arch-arm64],       [Create Mac arm64 architecture]),             , enable_arch_arm64=no)
 AC_ARG_ENABLE(staticlibs,       AC_HELP_STRING([--enable-staticlibs],       [Use static libmediainfo and libzen]),        , enable_staticlibs=no)
 
 dnl -------------------------------------------------------------------------
@@ -191,17 +192,17 @@ if test "$with_wxwidgets" = "yes"; then
         dnl System lib found!
         with_wxwidgets="system"
     fi
-    
+
     if test "$with_wxwidgets" = "no"; then
         AC_MSG_ERROR([
             wxWidgets must be installed on your system.
-     
+
             Please check that wx-config is in path, the directory
             where wxWidgets libraries are installed (returned by
             'wx-config --libs' or 'wx-config --static --libs' command)
             is in LD_LIBRARY_PATH or equivalent variable and
-            wxWidgets version is $WxVersion or above, and the compilation 
-            is compatible with 
+            wxWidgets version is $WxVersion or above, and the compilation
+            is compatible with
             --unicode=$enable_unicode --static=$with_wx_static
             ])
     fi
@@ -358,12 +359,6 @@ dnl
 if test "$enable_universal_binary" = "yes"; then
     enable_arch_ppc=yes
     enable_arch_i386=yes
-    if test "$with_macosx_sdk" = no ; then
-        with_macosx_sdk="/Developer/SDKs/MacOSX10.4u.sdk"
-    fi
-    if test "$with_macosx_version_min" = no ; then
-        with_macosx_version_min="10.4"
-    fi
 fi
 if test "$enable_arch_ppc" = "yes"; then
     CXXFLAGS="$CXXFLAGS -arch ppc"
@@ -385,11 +380,12 @@ if test "$enable_arch_x86_64" = "yes"; then
     CFLAGS="$CFLAGS -arch x86_64"
     LDFLAGS="$LDFLAGS -arch x86_64"
 fi
-if test "$with_macosx_sdk" = "yes" ; then
-    CXXFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CXXFLAGS"
-    CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CFLAGS"
-    LDFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $LDFLAGS"
-elif test "x$with_macosx_sdk" != xno ; then
+if test "$enable_arch_arm64" = "yes"; then
+	CXXFLAGS="$CXXFLAGS -arch arm64"
+	CFLAGS="$CFLAGS -arch arm64"
+	LDFLAGS="$LDFLAGS -arch arm64"
+fi
+if test "x$with_macosx_sdk" != xno ; then
     CXXFLAGS="-isysroot $with_macosx_sdk $CXXFLAGS"
     CFLAGS="-isysroot $with_macosx_sdk $CFLAGS"
     LDFLAGS="-isysroot $with_macosx_sdk $LDFLAGS"

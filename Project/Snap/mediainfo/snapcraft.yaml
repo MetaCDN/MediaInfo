@@ -1,5 +1,5 @@
 name: mediainfo
-version: 19.04
+version: 21.09
 summary: Command-line utility for reading information from audio/video files
 description: |
   MediaInfo is a utility used for retrieving technical information and other
@@ -13,6 +13,7 @@ apps:
     plugs:
       - home
       - network
+      - removable-media
 
 parts:
   mediainfo:

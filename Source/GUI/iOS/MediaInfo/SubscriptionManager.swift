@@ -23,14 +23,38 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
     static let shared = SubscriptionManager()
 
     private let subscriptionId = "net.mediaarea.mediainfo.ios.nrsubs.inapp1"
+    private let lifetimeSubscriptionId = "net.mediaarea.mediainfo.ios.purchase.inapp1"
 
-    var subscriptionDetails: SKProduct? {
-        didSet {
-            NotificationCenter.default.post(name: .subscriptionDetailsReady, object: nil)
+    var subscriptionDetails: SKProduct?
+    var lifetimeSubscriptionDetails: SKProduct?
+
+    var subscriptionActive: Bool = false {
+        didSet(oldValue) {
+            if subscriptionActive != oldValue {
+                NotificationCenter.default.post(name: .subscriptionStateChanged, object: nil)
+            }
         }
     }
+    var isLifetime: Bool {
+        get {
+            if UserDefaults.standard.bool(forKey: "LifetimeSubscription") {
+                return true
+            }
 
-    var subscriptionActive: Bool = false
+            if NSUbiquitousKeyValueStore.default.bool(forKey: "LifetimeSubscription") {
+                return true
+            }
+
+            return false
+        }
+        set(newValue) {
+            if newValue {
+                UserDefaults.standard.set(true, forKey: "LifetimeSubscription")
+                NSUbiquitousKeyValueStore.default.set(true, forKey: "LifetimeSubscription")
+                subscriptionActive = true
+            }
+        }
+    }
 
     var subscriptions: [Date] {
         get {
@@ -63,6 +87,37 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
         }
     }
 
+    var codes: [String] {
+        get {
+            var toReturn: [String] = []
+
+            if let local = UserDefaults.standard.array(forKey: "Codes") as? [String] {
+                toReturn = local
+            }
+
+            if let remote = NSUbiquitousKeyValueStore.default.array(forKey: "Codes") as? [String] {
+                toReturn = Array(Set(toReturn + remote))
+            }
+            return toReturn
+        }
+        set(newValue) {
+            var toAdd = newValue
+
+            if let local = UserDefaults.standard.array(forKey: "Codes") as? [String] {
+                toAdd = Array(Set(toAdd + local))
+            }
+
+            if let remote = NSUbiquitousKeyValueStore.default.array(forKey: "Codes") as? [String] {
+                toAdd = Array(Set(toAdd + remote))
+            }
+
+            if toAdd.count > 0 {
+                UserDefaults.standard.set(toAdd, forKey: "Codes")
+                NSUbiquitousKeyValueStore.default.set(toAdd, forKey: "Codes")
+            }
+        }
+    }
+
     var subscriptionEndDate: Date? {
         get {
             if let saved = UserDefaults.standard.array(forKey: "SubscriptionEndDate") as? [Date], saved.count > 0 {
@@ -74,9 +129,8 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
             if let newDate = newValue {
                 if newDate > subscriptionEndDate ?? Date(timeIntervalSince1970: 0.0) {
                     UserDefaults.standard.set([newDate], forKey: "SubscriptionEndDate")
+                    subscriptionActive = subscriptionActive || isLifetime || newDate >= Date()
 
-                    subscriptionActive = newDate >= Date()
-                    NotificationCenter.default.post(name: .subscriptionStateChanged, object: nil)
                 }
             }
         }
@@ -84,7 +138,7 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
 
     var shouldNotifyUserForSubscriptionEnd: Bool {
         get {
-            if let end = subscriptionEndDate, end < Date() {
+            if let end = subscriptionEndDate, end < Date() && !isLifetime {
                 if let saved = NSUbiquitousKeyValueStore.default.array(forKey: "SubscriptionEndUserNotificationDate") as? [Date], saved.count > 0 {
                     let lastNotificationDate = saved[0]
                     if lastNotificationDate <= end {
@@ -105,17 +159,20 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
 
         NSUbiquitousKeyValueStore.default.synchronize()
 
-        parseSubscriptions()
+        parseReceipt()
 
         if let endDate = subscriptionEndDate {
-            subscriptionActive = endDate >= Date()
+            subscriptionActive = isLifetime || endDate >= Date()
+        }
+        if isLifetime {
+            subscriptionActive = true
         }
     }
 
     func notifyUserForSubscriptionEnd(parent: UIViewController & SubscribeResultDelegate) {
         NSUbiquitousKeyValueStore.default.set([Date()], forKey: "SubscriptionEndUserNotificationDate")
-        let controller = UIAlertController(title: "Renew subscription?", message: "Your subscription has just ended.", preferredStyle: .alert)
-        controller.addAction(UIAlertAction(title: "Renew", style: .default, handler: { _ in
+        let controller = UIAlertController(title: NSLocalizedString("Renew subscription?", tableName: "Core", comment: ""), message: NSLocalizedString("Your subscription has just ended.", tableName: "Core", comment: ""), preferredStyle: .alert)
+        controller.addAction(UIAlertAction(title: NSLocalizedString("Renew", tableName: "Core", comment: ""), style: .default, handler: { _ in
             let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
             if let subscribeViewController = storyboard.instantiateViewController(withIdentifier: "SubscribeViewController") as? SubscribeViewController {
                 let navigationController = UINavigationController(rootViewController: subscribeViewController)
@@ -124,13 +181,13 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
                 parent.present(navigationController, animated: true, completion: nil)
             }
         }))
-        controller.addAction(UIAlertAction(title: "Close", style: .cancel))
+        controller.addAction(UIAlertAction(title: NSLocalizedString("Close", tableName: "Core", comment: ""), style: .cancel))
 
         parent.present(controller, animated: true)
     }
 
-    func purchase() {
-        if let subscription = subscriptionDetails {
+    func purchase(product: SKProduct?) {
+        if let subscription = product {
             let payment = SKPayment(product: subscription)
             SKPaymentQueue.default().add(payment)
         }
@@ -159,7 +216,7 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
     }
 
     func loadSubscription() {
-        let request = SKProductsRequest(productIdentifiers: Set([subscriptionId]))
+        let request = SKProductsRequest(productIdentifiers: Set([subscriptionId, lifetimeSubscriptionId]))
         request.delegate = self
         request.start()
     }
@@ -169,6 +226,12 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
             if product.productIdentifier == subscriptionId {
                 subscriptionDetails = product
             }
+            else if product.productIdentifier == lifetimeSubscriptionId {
+                lifetimeSubscriptionDetails = product
+            }
+        }
+        if subscriptionDetails != nil && lifetimeSubscriptionDetails != nil {
+            NotificationCenter.default.post(name: .subscriptionDetailsReady, object: nil)
         }
     }
 
@@ -207,11 +270,15 @@ class SubscriptionManager : NSObject, SKProductsRequestDelegate {
                         subscriptions.append(subscription.purchaseDate)
                     }
                 }
-                parseSubscriptions()
+
+                if decodedReceipt.purchases(ofProductIdentifier: lifetimeSubscriptionId).count > 0 {
+                    isLifetime = true
+                }
             } catch {
                 NSLog("ERROR: unable to decode receipt, %@", error as NSError)
             }
         }
+        parseSubscriptions()
     }
 
     func loadReceipt() -> Data? {

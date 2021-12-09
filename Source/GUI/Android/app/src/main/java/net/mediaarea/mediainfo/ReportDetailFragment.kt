@@ -11,12 +11,12 @@ import java.io.File
 
 import androidx.fragment.app.Fragment
 import androidx.documentfile.provider.DocumentFile
+import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.app.Activity
-import android.content.res.Configuration
 import android.content.SharedPreferences
 import android.content.Context
 import android.content.Intent
@@ -36,7 +36,6 @@ import kotlinx.android.synthetic.main.report_detail.view.*
 
 class ReportDetailFragment : Fragment() {
     companion object {
-        const val ARG_REPORT_ID: String = "id"
         const val SAVE_FILE_REQUEST_CODE: Int = 1
     }
 
@@ -50,8 +49,8 @@ class ReportDetailFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            if (it.containsKey(ARG_REPORT_ID)) {
-                val newId: Int = it.getInt(ARG_REPORT_ID)
+            if (it.containsKey(Core.ARG_REPORT_ID)) {
+                val newId: Int = it.getInt(Core.ARG_REPORT_ID)
                 if (newId != -1)
                     id = newId
             }
@@ -60,16 +59,24 @@ class ReportDetailFragment : Fragment() {
         setHasOptionsMenu(true)
     }
 
-    override fun onAttach(context: Context?) {
+    override fun onAttach(context: Context) {
         super.onAttach(context)
 
         try {
             activityListener = activity as ReportActivityListener
-        } catch (e: ClassCastException) {
+        } catch (_: Throwable) {
             throw ClassCastException(activity.toString() + " must implement ReportActivityListener")
         }
 
-        sharedPreferences = activity?.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE)
+        sharedPreferences = getDefaultSharedPreferences(context)
+        val oldSharedPreferences = activity?.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE)
+        val key = getString(R.string.preferences_view_key)
+
+        if (sharedPreferences?.contains(key) == false && oldSharedPreferences?.contains(key) == true) {
+            sharedPreferences?.edit()
+                             ?.putString(key, oldSharedPreferences.getString(key, "HTML"))
+                             ?.apply()
+        }
 
         sharedPreferences?.getString(getString(R.string.preferences_view_key), "HTML").let {
             if (it != null)
@@ -92,9 +99,7 @@ class ReportDetailFragment : Fragment() {
             disposable.add(activityListener.getReportViewModel().getReport(id)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe {
-                        activity?.title = it.filename
-
+                    .doOnSuccess {
                         val report: String = Core.convertReport(it.report, view)
                         var content = ""
                         if (view != "HTML") {
@@ -110,7 +115,7 @@ class ReportDetailFragment : Fragment() {
                         content = content.replace("<body>", "<body style=\"background-color: ${background}; color: ${foreground};\">")
 
                         rootView.report_detail.loadDataWithBaseURL(null, content, "text/html", "utf-8", null)
-             })
+             }.subscribe())
         }
 
         return rootView
@@ -181,11 +186,14 @@ class ReportDetailFragment : Fragment() {
 
         for (current: Core.ReportView in Core.views) {
             val index: Int = Core.views.indexOf(current)
-            viewMenu.add(R.id.menu_views_group, Menu.NONE, index, current.desc).setOnMenuItemClickListener { item: MenuItem ->
-                val requested: String = Core.views.findLast { it.desc == item.title }?.name.orEmpty()
+            var desc = current.desc
+            if (desc == "Text") {
+                desc = resources.getString(R.string.text_output_desc)
+            }
 
-                if (requested.isNotEmpty() && !requested.contentEquals(view)) {
-                    view = requested
+            viewMenu.add(R.id.menu_views_group, Menu.NONE, index, desc).setOnMenuItemClickListener {
+                if (view != current.name) {
+                    view = current.name
 
                     // Save new default
                     sharedPreferences
@@ -194,15 +202,23 @@ class ReportDetailFragment : Fragment() {
                             ?.apply()
 
                     // Reset view
-                    fragmentManager
-                            ?.beginTransaction()
-                            ?.detach(this)
-                            ?.attach(this)
-                            ?.commit()
+                    parentFragmentManager.fragments.forEach {
+                        val fragment = it as? ReportDetailFragment
+                        if (fragment!=null) {
+                            fragment.view = current.name
+                            if (fragment.isAdded) {
+                                parentFragmentManager
+                                        .beginTransaction()
+                                        .detach(it)
+                                        .attach(it)
+                                        .commit()
+                            }
+                        }
+                    }
                 }
 
                 true
-            }.setCheckable(true).setChecked(current.name == view)
+            }.setCheckable(true).isChecked = (current.name == view)
 
             viewMenu.setGroupCheckable(R.id.menu_views_group, true, true)
         }
@@ -289,7 +305,7 @@ class ReportDetailFragment : Fragment() {
     private fun onError() {
         val applicationContext = activity?.applicationContext
         if (applicationContext!=null) {
-            val toast = Toast.makeText(applicationContext, R.string.error_text, Toast.LENGTH_LONG)
+            val toast = Toast.makeText(applicationContext, R.string.error_write_text, Toast.LENGTH_LONG)
             toast.show()
         }
     }

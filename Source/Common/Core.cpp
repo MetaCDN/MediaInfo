@@ -73,7 +73,7 @@ void Core::Menu_File_Open_Files_Begin (bool Close, bool WithThread)
 size_t Core::Menu_File_Open_Files_Continue (const String &FileName)
 {
     /*
-    //Initilaizing MediaInfo
+    //Initializing MediaInfo
     MediaInfo MI;
 
     //From: preparing an example file for reading
@@ -328,6 +328,13 @@ void Core::Menu_View_NISO_Z39_87()
 {
     MI->Option(__T("Inform"), __T("NISO_Z39.87"));
     Kind = Kind_NISO_Z39_87;
+}
+
+//---------------------------------------------------------------------------
+void Core::Menu_View_Graph_Adm_Svg()
+{
+    MI->Option(__T("Inform"), __T("Graph_Adm_Svg"));
+    Kind = Kind_Graph_Adm_Svg;
 }
 
 //---------------------------------------------------------------------------

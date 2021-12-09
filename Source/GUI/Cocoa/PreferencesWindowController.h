@@ -9,9 +9,15 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PreferencesWindowController : NSWindowController {
-    //IBOutlet NSArrayController *languagesArrayController;
-    IBOutlet NSToolbar *toolbar;
+    IBOutlet NSTabView *tabView;
     IBOutlet NSPopUpButton *langsCombo;
+    IBOutlet NSTextField *viewLabel;
+    IBOutlet NSPopUpButton *viewCombo;
+    IBOutlet NSButton *graphAdmShowTrackUIDs;
+    IBOutlet NSButton *graphAdmShowChannelFormats;
+    IBOutlet NSButton *subscribeButton;
+
+    NSMutableArray *observers;
 }
 
 

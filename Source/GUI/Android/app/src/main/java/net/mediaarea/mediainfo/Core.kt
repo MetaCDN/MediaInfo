@@ -13,10 +13,11 @@ object Core {
         }
     }
 
+    val ARG_REPORT_ID = "id"
     val mi: MediaInfo = MediaInfo()
     val views: MutableList<ReportView> = mutableListOf()
     val version: String = mi.Option("Info_Version").replace("MediaInfoLib - v", "")
-    var thanked: Boolean = false
+    var language: String =  ""
 
     init {
         // populate views list
@@ -24,11 +25,16 @@ object Core {
         viewsCsv.split("\n").forEach {
             val view: List<String> = it.split(",")
             if (view.size > 2)
-                views.add(Core.ReportView(view[0], view[1], view[2], true))
+                views.add(ReportView(view[0], view[1], view[2], true))
         }
     }
 
+    fun setLocale(locale: String) {
+        language = locale
+    }
+
     fun createReport(fd: Int, name: String): ByteArray {
+        mi.Option("Language", "")
         mi.Option("Inform", "MIXML")
         mi.Option("Input_Compressed", "")
         mi.Option("Inform_Compress", "zlib+base64")
@@ -45,8 +51,22 @@ object Core {
         mi.Option("Inform_Compress", "")
         mi.Option("Input_Compressed", "zlib+base64")
 
-        if (format == "Text" && !export)
-            mi.Option("Language", "  Config_Text_ColumnSize;25")
+        if (format == "Text" && !export) {
+            if (language.isNotEmpty()) {
+                mi.Option("Language", language.replace("  Config_Text_ColumnSize;40", "  Config_Text_ColumnSize;25"))
+            }
+            else {
+                mi.Option("Language", "  Config_Text_ColumnSize;25")
+            }
+        }
+        else {
+            if (language.isNotEmpty()) {
+                mi.Option("Language", language)
+            }
+            else {
+                mi.Option("Language", "")
+            }
+        }
 
         mi.Open_Buffer_Init(report.size.toLong(), 0L)
         mi.Open_Buffer_Continue(report, report.size.toLong())

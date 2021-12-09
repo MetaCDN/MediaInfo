@@ -92,6 +92,7 @@
 				<string>rv</string>
 				<string>swf</string>
 				<string>tp</string>
+				<string>trec</string>
 				<string>ts</string>
 				<string>vcd</string>
 				<string>vfw</string>
@@ -193,7 +194,7 @@
 	<key>CFBundleIconFile</key>
 	<string>mediainfo</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.mediaarea.mediainfo.mac</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -203,7 +204,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>${APP_VERSION}</string>
 	<key>CFBundleVersion</key>
-	<string>${APP_VERSION}</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>DTCompiler</key>
 	<string></string>
 	<key>DTPlatformBuild</key>
@@ -213,7 +214,7 @@
 	<key>DTSDKBuild</key>
 	<string>11E52</string>
 	<key>DTSDKName</key>
-	<string>macosx10.6</string>
+	<string>macosx10.9</string>
 	<key>DTXcode</key>
 	<string>0452</string>
 	<key>DTXcodeBuild</key>

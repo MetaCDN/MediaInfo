@@ -136,92 +136,97 @@ void __fastcall TPreferencesF::General_Output_SelChange(TObject *Sender)
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
-
     if (General_Output_Sel->ItemIndex==7)
     {
-        Prefs->Config(__T("Output"))=__T("MPEG-7");
+        Prefs->Config(__T("Output"))=__T("Graph_Svg");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==8)
     {
-        Prefs->Config(__T("Output"))=__T("PBCore_1.2");
+        Prefs->Config(__T("Output"))=__T("MPEG-7");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==9)
     {
-        Prefs->Config(__T("Output"))=__T("PBCore_2.0");
+        Prefs->Config(__T("Output"))=__T("PBCore_1.2");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==10)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.5");
+        Prefs->Config(__T("Output"))=__T("PBCore_2.0");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==11)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.6");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.5");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==12)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_ps");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.6");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==13)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_sp");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_ps");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==14)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_ps_json");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_sp");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==15)
     {
-        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_sp_json");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_ps_json");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==16)
     {
-        Prefs->Config(__T("Output"))=__T("FIMS_1.1");
+        Prefs->Config(__T("Output"))=__T("EBUCore_1.8_sp_json");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==17)
     {
-        Prefs->Config(__T("Output"))=__T("FIMS_1.2");
+        Prefs->Config(__T("Output"))=__T("FIMS_1.1");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==18)
     {
-        Prefs->Config(__T("Output"))=__T("FIMS_1.3");
+        Prefs->Config(__T("Output"))=__T("FIMS_1.2");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==19)
     {
-        Prefs->Config(__T("Output"))=__T("NISO_Z39.87");
+        Prefs->Config(__T("Output"))=__T("FIMS_1.3");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==20)
     {
-        Prefs->Config(__T("Output"))=__T("reVTMD");
+        Prefs->Config(__T("Output"))=__T("NISO_Z39.87");
         MainF->Page->ActivePage=MainF->Page_Custom;
         General_Output_More->Visible=false;
     }
     if (General_Output_Sel->ItemIndex==21)
+    {
+        Prefs->Config(__T("Output"))=__T("reVTMD");
+        MainF->Page->ActivePage=MainF->Page_Custom;
+        General_Output_More->Visible=false;
+    }
+    if (General_Output_Sel->ItemIndex==22)
     {
         Prefs->Config(__T("Output"))=__T("Custom");
         MainF->Page->ActivePage=MainF->Page_Custom;
@@ -394,6 +399,25 @@ void __fastcall TPreferencesF::Advanced_CloseAllAutoClick(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
+void __fastcall TPreferencesF::Advanced_InformVersionClick(TObject *Sender)
+{
+    if (Advanced_InformVersion->Checked)
+        Prefs->Config(__T("InformVersion"), 1)=__T("1");
+    else
+        Prefs->Config(__T("InformVersion"), 1)=__T("0");
+}
+
+//---------------------------------------------------------------------------
+void __fastcall TPreferencesF::Advanced_InformTimestampClick(TObject *Sender)
+
+{
+    if (Advanced_InformTimestamp->Checked)
+        Prefs->Config(__T("InformTimestamp"), 1)=__T("1");
+    else
+        Prefs->Config(__T("InformTimestamp"), 1)=__T("0");
+}
+
+//---------------------------------------------------------------------------
 void __fastcall TPreferencesF::Language_NewClick(TObject *Sender)
 {
     UnicodeString S1=__T("New");
@@ -415,6 +439,25 @@ void __fastcall TPreferencesF::Language_DeleteClick(TObject *Sender)
     Prefs->Remove(Prefs_Language, GUI_Text(Language_Sel->Text));
     ComboBox_Update(General_Language_Sel, Prefs_Language);
     ComboBox_Update(Language_Sel, Prefs_Language);
+}
+
+//---------------------------------------------------------------------------
+void __fastcall TPreferencesF::Graph_Adm_ShowTrackUIDsClick(TObject *Sender)
+{
+    if (Graph_Adm_ShowTrackUIDs->Checked)
+        Prefs->Config(__T("Graph_Adm_ShowTrackUIDs"), 1)=__T("1");
+    else
+        Prefs->Config(__T("Graph_Adm_ShowTrackUIDs"), 1)=__T("0");
+}
+
+//---------------------------------------------------------------------------
+void __fastcall TPreferencesF::Graph_Adm_ShowChannelFormatsClick(TObject *Sender)
+
+{
+    if (Graph_Adm_ShowChannelFormats->Checked)
+        Prefs->Config(__T("Graph_Adm_ShowChannelFormats"), 1)=__T("1");
+    else
+        Prefs->Config(__T("Graph_Adm_ShowChannelFormats"), 1)=__T("0");
 }
 
 //---------------------------------------------------------------------------
@@ -468,6 +511,10 @@ void __fastcall TPreferencesF::TreeChange(TObject *Sender,
         Page->ActivePage=Customize_Custom;
     }
     if (Node==Tree->Items->Item[6])
+    {
+        Page->ActivePage=Customize_Graph;
+    }
+    if (Node==Tree->Items->Item[7])
     {
         Page->ActivePage=Customize_Language;
     }
@@ -524,6 +571,8 @@ void __fastcall TPreferencesF::Setup_AdvancedShow(TObject *Sender)
     CB_ShowToolBar->Checked=Prefs->Config(__T("ShowToolBar")).To_int32s();
     CB_ShowMenu->Checked=Prefs->Config(__T("ShowMenu")).To_int32s();
     Advanced_CloseAllAuto->Checked=Prefs->Config(__T("CloseAllAuto")).To_int32s();
+    Advanced_InformVersion->Checked=Prefs->Config(__T("InformVersion")).To_int32s();
+    Advanced_InformTimestamp->Checked=Prefs->Config(__T("InformTimestamp")).To_int32s();
 }
 
 //---------------------------------------------------------------------------
@@ -538,6 +587,14 @@ void __fastcall TPreferencesF::Customize_CustomShow(TObject *Sender)
 {
     ComboBox_Update(Custom_Sel, Prefs_Custom);
     Custom_SelChange(NULL);
+}
+
+//---------------------------------------------------------------------------
+void __fastcall TPreferencesF::Customize_GraphShow(TObject *Sender)
+{
+    Graph_Adm_ShowTrackUIDs->Checked=Prefs->Config(__T("Graph_Adm_ShowTrackUIDs")).To_int32s();
+    Graph_Adm_ShowChannelFormats->Checked=Prefs->Config(__T("Graph_Adm_ShowChannelFormats")).To_int32s();
+
 }
 
 //---------------------------------------------------------------------------
@@ -560,7 +617,8 @@ void __fastcall TPreferencesF::GUI_Configure()
     Tree->Items->Item[3]->Text=Prefs->Translate(__T("Sheet")).c_str();
     Tree->Items->Item[4]->Text=Prefs->Translate(__T("Tree & Text")).c_str();
     Tree->Items->Item[5]->Text=Prefs->Translate(__T("Custom")).c_str();
-    Tree->Items->Item[6]->Text=Prefs->Translate(__T("Language")).c_str();
+    Tree->Items->Item[7]->Text=Prefs->Translate(__T("Graph")).c_str();
+    Tree->Items->Item[7]->Text=Prefs->Translate(__T("Language")).c_str();
     //-General
     General_Language_More->Caption=(Prefs->Translate(__T("More"))+__T("...")).c_str();
     Langue_C->Caption=Prefs->Translate(__T("Language")).c_str();
@@ -576,6 +634,7 @@ void __fastcall TPreferencesF::GUI_Configure()
     General_Output_Sel->Items->Add(Prefs->Translate(__T("HTML")).c_str());
     General_Output_Sel->Items->Add("XML");
     General_Output_Sel->Items->Add("JSON");
+    General_Output_Sel->Items->Add("Graph");
     General_Output_Sel->Items->Add("MPEG-7");
     General_Output_Sel->Items->Add("PBCore_1.2");
     General_Output_Sel->Items->Add("PBCore_2.0");
@@ -598,21 +657,22 @@ void __fastcall TPreferencesF::GUI_Configure()
     else if (Prefs->Config(__T("Output"))==__T("HTML"))       General_Output_Sel->ItemIndex=4;
     else if (Prefs->Config(__T("Output"))==__T("XML"))        General_Output_Sel->ItemIndex=5;
     else if (Prefs->Config(__T("Output"))==__T("JSON"))       General_Output_Sel->ItemIndex=6;
-    else if (Prefs->Config(__T("Output"))==__T("MPEG-7"))     General_Output_Sel->ItemIndex=7;
-    else if (Prefs->Config(__T("Output"))==__T("PBCore_1.2")) General_Output_Sel->ItemIndex=8;
-    else if (Prefs->Config(__T("Output"))==__T("PBCore_2.0")) General_Output_Sel->ItemIndex=9;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.5")) General_Output_Sel->ItemIndex=10;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.6")) General_Output_Sel->ItemIndex=11;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_ps")) General_Output_Sel->ItemIndex=12;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_sp")) General_Output_Sel->ItemIndex=13;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_ps_json")) General_Output_Sel->ItemIndex=14;
-    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_sp_json")) General_Output_Sel->ItemIndex=15;
-    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.1")) General_Output_Sel->ItemIndex=16;
-    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.2")) General_Output_Sel->ItemIndex=17;
-    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.3")) General_Output_Sel->ItemIndex=18;
-    else if (Prefs->Config(__T("Output"))==__T("NISO_Z39.87")) General_Output_Sel->ItemIndex=19;
-    else if (Prefs->Config(__T("Output"))==__T("reVTMD"))     General_Output_Sel->ItemIndex=20;
-    else if (Prefs->Config(__T("Output"))==__T("Custom"))     General_Output_Sel->ItemIndex=21;
+    else if (Prefs->Config(__T("Output"))==__T("Graph_Svg")) General_Output_Sel->ItemIndex=7;
+    else if (Prefs->Config(__T("Output"))==__T("MPEG-7"))     General_Output_Sel->ItemIndex=8;
+    else if (Prefs->Config(__T("Output"))==__T("PBCore_1.2")) General_Output_Sel->ItemIndex=9;
+    else if (Prefs->Config(__T("Output"))==__T("PBCore_2.0")) General_Output_Sel->ItemIndex=10;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.5")) General_Output_Sel->ItemIndex=11;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.6")) General_Output_Sel->ItemIndex=12;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_ps")) General_Output_Sel->ItemIndex=13;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_sp")) General_Output_Sel->ItemIndex=14;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_ps_json")) General_Output_Sel->ItemIndex=15;
+    else if (Prefs->Config(__T("Output"))==__T("EBUCore_1.8_sp_json")) General_Output_Sel->ItemIndex=16;
+    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.1")) General_Output_Sel->ItemIndex=17;
+    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.2")) General_Output_Sel->ItemIndex=18;
+    else if (Prefs->Config(__T("Output"))==__T("FIMS_1.3")) General_Output_Sel->ItemIndex=19;
+    else if (Prefs->Config(__T("Output"))==__T("NISO_Z39.87")) General_Output_Sel->ItemIndex=20;
+    else if (Prefs->Config(__T("Output"))==__T("reVTMD"))     General_Output_Sel->ItemIndex=21;
+    else if (Prefs->Config(__T("Output"))==__T("Custom"))     General_Output_Sel->ItemIndex=22;
     //-Advanced
     Setup_Advanced->Caption=Prefs->Translate(__T("Advanced")).c_str();
     CB_InscrireShell->Caption=Prefs->Translate(__T("Shell extension")).c_str();
@@ -621,6 +681,8 @@ void __fastcall TPreferencesF::GUI_Configure()
     CB_ShowToolBar->Caption=Prefs->Translate(__T("Show toolbar")).c_str();
     CB_ShowMenu->Caption=Prefs->Translate(__T("Show menu")).c_str();
     Advanced_CloseAllAuto->Caption=Prefs->Translate(__T("Close all before open")).c_str();
+    Advanced_InformVersion->Caption=Prefs->Translate(__T("Add version to text output")).c_str();
+    Advanced_InformTimestamp->Caption=Prefs->Translate(__T("Add creation date to text output")).c_str();
     //-Language
     Language_Caption->Caption=Prefs->Translate(__T("Choose language")).c_str();
     Language_Edit->Caption=(Prefs->Translate(__T("Edit"))+__T("...")).c_str();
@@ -633,6 +695,9 @@ void __fastcall TPreferencesF::GUI_Configure()
     Sheet_New->Caption=(Prefs->Translate(__T("New"))+__T("...")).c_str();
     //-Tree
     Tree_NotYet->Caption=(Prefs->Translate(__T("Not yet"))+__T("...")).c_str();
+    //-Graph
+    Graph_Adm_ShowTrackUIDs->Caption=Prefs->Translate(__T("ADM: Show TrackUIDs")).c_str();
+    Graph_Adm_ShowChannelFormats->Caption=Prefs->Translate(__T("ADM: Show ChannelFormats")).c_str();
     //-Custom
     Custom_Caption->Caption=Prefs->Translate(__T("Choose custom text")).c_str();
     Custom_Edit->Caption=(Prefs->Translate(__T("Edit"))+__T("...")).c_str();

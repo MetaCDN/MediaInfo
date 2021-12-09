@@ -58,7 +58,7 @@ int Help()
     TEXTOUT("                    Full information Display with XML tags using the older");
     TEXTOUT("                    MediaInfo schema");
     TEXTOUT("--Output=JSON");
-    TEXTOUT("                    Full information Display using JSON");    
+    TEXTOUT("                    Full information Display using JSON");
     TEXTOUT("--Output=EBUCore");
     TEXTOUT("                    Full information Display with EBUCore compliant XML tags");
     TEXTOUT("--Output=EBUCore_JSON");
@@ -84,6 +84,10 @@ int Help()
     TEXTOUT("                    Display non-translated unique identifiers (internal text)");
     TEXTOUT("--Details=1");
     TEXTOUT("                    Display mediatrace info");
+    TEXTOUT("--inform_version=1");
+    TEXTOUT("                    Add MediaInfoLib version to the text output");
+    TEXTOUT("--inform_timestamp=1");
+    TEXTOUT("                    Add report creation timestamp to the text output");
     TEXTOUT("--File_TestContinuousFileNames=0");
     TEXTOUT("                    Disable image sequence detection");
     TEXTOUT("--LogFile=...");
